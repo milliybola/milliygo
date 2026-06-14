@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react'
 import { useRouter } from 'next/router'
 import { useTranslations } from 'next-intl'
-import { Form, Input, Button, Checkbox, message, Card, Space, Typography, Alert, Modal, Result, Tabs } from 'antd'
+import { Form, Input, Button, Checkbox, message, Card, Space, Typography, Alert, Modal, Result, Tabs, Divider, Radio } from 'antd'
 import { WarningOutlined, DeleteOutlined, InfoCircleOutlined, PhoneOutlined, UserOutlined, MailOutlined } from '@ant-design/icons'
 import CBreadcrumb from '@/components/common/CBreadcrumb'
 import { useHasHydrated } from '@/hooks/useHasHydrated'
@@ -30,10 +30,17 @@ export async function getStaticProps(context: any) {
 const PAGE_TEXTS: Record<string, any> = {
   uz: {
     title: "Hisobni o'chirish so'rovi",
-    subtitle: "Google Play Store talablariga muvofiq, MilliyGo hisobini o'chirish sahifasi",
+    subtitle: "Google Play Store talablariga muvofiq, MilliyGo (MilliyGo yetkazib berish xizmati) ilovasi foydalanuvchilari uchun hisobni va shaxsiy ma'lumotlarni o'chirish sahifasi",
     breadcrumb: "Hisobni o'chirish",
     tabInfo: "Ma'lumot",
     tabForm: "So'rov yuborish",
+    stepsHeading: "Hisobni o'chirish yoki ma'lumotlarni tozalash qadamlari:",
+    steps: [
+      "Ushbu sahifaning yuqori qismidagi 'So'rov yuborish' bo'limiga o'ting.",
+      "Profilga bog'langan ism va telefon raqamingizni kiriting.",
+      "So'rov turini tanlang: hisobni butunlay o'chirish yoki ba'zi ma'lumotlarni tozalash (masalan, buyurtmalar tarixi).",
+      "Rozilik shartini belgilang va 'O'chirish so'rovini yuborish' tugmasini bosing."
+    ],
     whatDeleted: "Nimalar o'chiriladi?",
     whatDeletedText: "Hisobingiz o'chirilgandan so'ng, quyidagi ma'lumotlar tizimimizdan to'liq va qaytarib bo'lmaydigan tarzda o'chirib tashlanadi:",
     deletedItems: [
@@ -53,6 +60,12 @@ const PAGE_TEXTS: Record<string, any> = {
     deleteNowBtn: "Hisobni hoziroq o'chirish",
     formHeading: "Hisobni o'chirish so'rovi formasi",
     formText: "Iltimos, hisobingizga bog'langan shaxsiy ma'lumotlarni to'ldiring:",
+    labelRequestType: "So'rov turi",
+    optDeleteAll: "Butunlay hisobni va barcha shaxsiy ma'lumotlarni o'chirish",
+    optDeletePartial: "Faqat ba'zi shaxsiy ma'lumotlarni o'chirish (hisobni saqlagan holda)",
+    labelPartialData: "O'chirilishi kerak bo'lgan ma'lumotlar",
+    optPartialHistory: "Buyurtmalar va qidiruvlar tarixi",
+    optPartialLocations: "Saqlangan manzillar va geolokatsiya",
     labelName: "Ism va Familiya",
     placeholderName: "Ismingizni kiriting",
     labelPhone: "Telefon raqamingiz",
@@ -76,10 +89,17 @@ const PAGE_TEXTS: Record<string, any> = {
   },
   ru: {
     title: "Запрос на удаление аккаунта",
-    subtitle: "Страница удаления аккаунта MilliyGo в соответствии с требованиями Google Play Store",
+    subtitle: "Страница удаления аккаунта и персональных данных пользователей MilliyGo (служба доставки MilliyGo) в соответствии с требованиями Google Play Store",
     breadcrumb: "Удаление аккаунта",
     tabInfo: "Информация",
     tabForm: "Отправить запрос",
+    stepsHeading: "Шаги для удаления аккаунта или очистки данных:",
+    steps: [
+      "Перейдите во вкладку 'Отправить запрос' в верхней части этой страницы.",
+      "Введите имя и номер телефона, привязанные к вашему профилю.",
+      "Выберите тип запроса: полное удаление аккаунта или очистка только некоторых данных (например, истории заказов).",
+      "Согласитесь с условиями и нажмите кнопку 'Отправить запрос на удаление'."
+    ],
     whatDeleted: "Что будет удалено?",
     whatDeletedText: "После удаления вашего аккаунта следующие данные будут полностью и безвозвратно удалены из нашей системы:",
     deletedItems: [
@@ -99,13 +119,19 @@ const PAGE_TEXTS: Record<string, any> = {
     deleteNowBtn: "Удалить аккаунт сейчас",
     formHeading: "Форма запроса на удаление аккаунта",
     formText: "Пожалуйста, заполните данные, связанные с вашим аккаунтом:",
+    labelRequestType: "Тип запроса",
+    optDeleteAll: "Полное удаление аккаунта и всех персональных данных",
+    optDeletePartial: "Удаление только определенных данных (без удаления аккаунта)",
+    labelPartialData: "Данные для удаления",
+    optPartialHistory: "История заказов и поисковых запросов",
+    optPartialLocations: "Сохраненные адреса и геолокация",
     labelName: "Имя и Фамилия",
     placeholderName: "Введите ваше имя",
     labelPhone: "Номер телефона",
     placeholderPhone: "+998 90 123 45 67",
     labelReason: "Причина удаления (необязательно)",
     placeholderReason: "Вы можете указать причину удаления аккаунта",
-    labelConsent: "Я согласен на полное и безвозвратное удаление моего аккаунта и всех связанных с ним данных.",
+    labelConsent: "Я согласен на полное и безвозвратное удаление моего аккаунта и всех персональных данных.",
     btnSubmit: "Отправить запрос на удаление",
     errName: "Пожалуйста, введите ваше имя",
     errPhone: "Пожалуйста, введите ваш номер телефона",
@@ -122,10 +148,17 @@ const PAGE_TEXTS: Record<string, any> = {
   },
   en: {
     title: "Account Deletion Request",
-    subtitle: "MilliyGo account deletion page in compliance with Google Play Store guidelines",
+    subtitle: "Account and personal data deletion page for MilliyGo (MilliyGo delivery service) users in compliance with Google Play Store guidelines",
     breadcrumb: "Delete Account",
     tabInfo: "Information",
     tabForm: "Submit Request",
+    stepsHeading: "Steps to request account deletion or data clearance:",
+    steps: [
+      "Navigate to the 'Submit Request' tab at the top of this page.",
+      "Enter your name and phone number associated with your profile.",
+      "Select the request type: delete the entire account or clear only specific data (e.g. order history).",
+      "Check the consent checkbox and click 'Submit Deletion Request'."
+    ],
     whatDeleted: "What will be deleted?",
     whatDeletedText: "After deleting your account, the following data will be completely and permanently removed from our system:",
     deletedItems: [
@@ -145,6 +178,12 @@ const PAGE_TEXTS: Record<string, any> = {
     deleteNowBtn: "Delete Account Now",
     formHeading: "Account Deletion Request Form",
     formText: "Please fill in the details associated with your account:",
+    labelRequestType: "Request Type",
+    optDeleteAll: "Delete entire account and all associated personal data",
+    optDeletePartial: "Delete only specific data (without deleting the account)",
+    labelPartialData: "Data to delete",
+    optPartialHistory: "Order and search history",
+    optPartialLocations: "Saved addresses and geolocation data",
     labelName: "Full Name",
     placeholderName: "Enter your full name",
     labelPhone: "Phone Number",
@@ -182,13 +221,15 @@ const DeleteAccountPage = () => {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const requestType = Form.useWatch('requestType', form)
 
   // Sync logged in user info if available
   useEffect(() => {
     if (isAuthenticated && userInfo) {
       form.setFieldsValue({
         name: `${userInfo.first_name || ''} ${userInfo.last_name || ''}`.trim(),
-        phone: userInfo.phone || ''
+        phone: userInfo.phone || '',
+        requestType: 'all'
       })
     }
   }, [isAuthenticated, userInfo, form])
@@ -205,18 +246,19 @@ const DeleteAccountPage = () => {
     },
   ]
 
-  // Submit request form (calls the public base/questions endpoint as a fallback ticket)
+  // Submit request form (calls the public delete-account endpoint)
   const handleFinish = async (values: any) => {
     setLoading(true)
     try {
-      const questionText = `[ACCOUNT DELETION REQUEST]\nName: ${values.name}\nPhone: ${values.phone}\nReason: ${values.reason || 'Not specified'}\nConsent: Yes`
-      
       await request({
-        url: '/base/questions/',
+        url: '/delete-account/',
         method: 'post',
         data: {
-          email: userInfo?.email || 'deletion-request@milliygo.uz',
-          question_text: questionText,
+          name: values.name,
+          phone: values.phone,
+          reason: values.reason || '',
+          request_type: values.requestType || 'all',
+          partial_data: values.requestType === 'partial' ? (values.partialData || []) : [],
         }
       })
       setSubmitted(true)
@@ -268,6 +310,20 @@ const DeleteAccountPage = () => {
       label: langText.tabInfo,
       children: (
         <Space direction="vertical" size="large" className="w-full">
+          <div>
+            <Title level={4} className="flex items-center gap-2 !mb-2">
+              <span className="h-2 w-2 rounded-full bg-teal-600"></span>
+              {langText.stepsHeading}
+            </Title>
+            <ol className="list-decimal pl-6 space-y-1.5 text-gray-600">
+              {langText.steps.map((step: string, i: number) => (
+                <li key={i}>{step}</li>
+              ))}
+            </ol>
+          </div>
+
+          <Divider className="my-2" />
+
           <div>
             <Title level={4} className="flex items-center gap-2 !mb-2">
               <InfoCircleOutlined className="text-[#008080]" />
@@ -385,6 +441,30 @@ const DeleteAccountPage = () => {
                 className="h-[52px] rounded-2xl text-base"
               />
             </Form.Item>
+
+            <Form.Item
+              name="requestType"
+              label={langText.labelRequestType}
+              initialValue="all"
+            >
+              <Radio.Group className="flex flex-col gap-2 bg-gray-50 border border-gray-100 rounded-2xl p-4">
+                <Radio value="all" className="text-sm font-semibold">{langText.optDeleteAll}</Radio>
+                <Radio value="partial" className="text-sm font-semibold">{langText.optDeletePartial}</Radio>
+              </Radio.Group>
+            </Form.Item>
+
+            {requestType === 'partial' && (
+              <Form.Item
+                name="partialData"
+                label={langText.labelPartialData}
+                initialValue={['history', 'locations']}
+              >
+                <Checkbox.Group className="flex flex-col gap-2 pl-4">
+                  <Checkbox value="history" className="text-sm">{langText.optPartialHistory}</Checkbox>
+                  <Checkbox value="locations" className="text-sm">{langText.optPartialLocations}</Checkbox>
+                </Checkbox.Group>
+              </Form.Item>
+            )}
 
             <Form.Item
               name="reason"
