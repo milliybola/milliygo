@@ -4,6 +4,7 @@
 
 @layer base {
   body {
+    font-family: 'Outfit', sans-serif !important;
     top: 0 !important;
 
     --_access-icon-bottom: 120px;
@@ -1480,4 +1481,136 @@ body {
 .animate-fade-up {
   animation: fade-up 0.5s ease-out forwards;
 }
+
+/* --- Milliy-Classic: Refined Uzbek Vibe --- */
+:root {
+  --milliy-blue: #0052B4;
+  --milliy-turquoise: #00B5AD;
+  --milliy-gold: #C5A059;
+  --milliy-bg: #FFFFFF;
+  --milliy-text: #111827;
+}
+
+.milliy-ikat-border {
+  border-bottom: 4px solid;
+  border-image: url('/uzbek_ikat_header_strip_1777986208191.png') 30 stretch;
+}
+
+.milliy-ikat-bg {
+  background-image: url('/uzbek_ikat_header_strip_1777986208191.png');
+  background-size: contain;
+  background-repeat: repeat-x;
+}
+
+.milliy-girih-bg {
+  background-image: url('/uzbek_classy_pattern_1777963841777.png');
+  background-size: 350px;
+  background-repeat: repeat;
+  opacity: 0.04;
+}
+
+.milliy-card {
+  @apply bg-white rounded-3xl border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300;
+}
+
+.milliy-card:hover {
+  @apply shadow-[0_12px_30px_rgba(0,82,180,0.08)] -translate-y-1;
+}
+
+.milliy-button {
+  background-color: var(--milliy-blue);
+  color: white;
+  font-weight: 600;
+  border-radius: 14px;
+  @apply px-6 py-2 transition-all duration-200 active:scale-95;
+}
+
+/* Base styles refinement */
+body {
+  font-family: 'Outfit', sans-serif !important;
+  color: var(--milliy-text);
+  background-color: #fff;
+}
+
+.section-title {
+  @apply text-2xl md:text-3xl font-bold text-[#111] mb-6 flex items-center gap-3;
+}
+
+.section-title::before {
+  content: '';
+  display: block;
+  width: 24px;
+  height: 24px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Crect x='6' y='6' width='12' height='12' rx='1' stroke='%23C5A059' stroke-width='2' fill='%23C5A059' fill-opacity='0.15'/%3E%3Crect x='6' y='6' width='12' height='12' rx='1' transform='rotate(45,12,12)' stroke='%23C5A059' stroke-width='2' fill='%23C5A059' fill-opacity='0.15'/%3E%3Ccircle cx='12' cy='12' r='2.5' fill='%23C5A059'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.milliy-pattern-bg {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cpath d='M40 0 L48 24 L72 32 L48 40 L40 64 L32 40 L8 32 L32 24 Z M40 8 L45 20 L57 24 L45 28 L40 40 L35 28 L23 24 L35 20 Z' fill='%23C5A059' fill-opacity='0.15'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* Premium Uzbek/Milliy Theme Classes */
+:root {
+  --milliy-blue-dark: #0A192F;
+  --milliy-blue-light: #0052B4;
+  --milliy-gold: #C5A059;
+  --milliy-gold-hover: #E5C583;
+  --milliy-turquoise: #008080;
+  --milliy-turquoise-light: #E0F2F1;
+}
+
+/* Girih Geometric blueprint pattern */
+.milliy-girih-blueprint {
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23C5A059' stroke-width='1' stroke-opacity='0.08'%3E%3Cpath d='M40 0l40 40-40 40L0 40z'/%3E%3Ccircle cx='40' cy='40' r='20'/%3E%3Cpath d='M0 0l80 80M80 0L0 80'/%3E%3Ccircle cx='40' cy='40' r='40'/%3E%3Cpath d='M40 0v80M0 40h80'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* Ikat Traditional Abrbandi pattern */
+.milliy-ikat-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23008080' stroke-width='1' stroke-opacity='0.06'%3E%3Cpath d='M60 0 L120 60 L60 120 L0 60 Z'/%3E%3Cpath d='M60 20 L100 60 L60 100 L20 60 Z' stroke='%23C5A059' stroke-opacity='0.08'/%3E%3Cpath d='M60 40 L80 60 L60 80 L40 60 Z' stroke='%230052B4' stroke-opacity='0.05'/%3E%3Ccircle cx='60' cy='60' r='5' fill='%23C5A059' fill-opacity='0.1'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* Elegant gold border ornament */
+.milliy-gold-frame {
+  border: 2px solid var(--milliy-gold);
+  border-radius: 24px;
+  position: relative;
+  padding: 28px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+}
+
+.milliy-gold-frame::before {
+  content: '✦';
+  position: absolute;
+  top: -12px;
+  left: 24px;
+  background: #FDFBF7;
+  color: var(--milliy-gold);
+  padding: 0 8px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.milliy-gold-frame::after {
+  content: '✦';
+  position: absolute;
+  bottom: -12px;
+  right: 24px;
+  background: #FDFBF7;
+  color: var(--milliy-gold);
+  padding: 0 8px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.milliy-ikat-strip {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='24' viewBox='0 0 120 24'%3E%3Cg fill-rule='evenodd'%3E%3Cpolygon points='20,0 40,12 20,24 0,12' fill='%230052B4'/%3E%3Cpolygon points='17,3 33,12 17,21 1,12' fill='%2300B5AD'/%3E%3Cpolygon points='14,6 26,12 14,18 2,12' fill='%23C5A059'/%3E%3Cpolygon points='60,0 80,12 60,24 40,12' fill='%23C5A059'/%3E%3Cpolygon points='57,3 73,12 57,21 41,12' fill='%23D22B2B'/%3E%3Cpolygon points='54,6 66,12 54,18 42,12' fill='%23FFFFFF' fill-opacity='0.95'/%3E%3Cpolygon points='100,0 120,12 100,24 80,12' fill='%23D22B2B'/%3E%3Cpolygon points='97,3 113,12 97,21 81,12' fill='%2300B5AD'/%3E%3Cpolygon points='94,6 106,12 94,18 82,12' fill='%23C5A059'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: auto 100%;
+  background-repeat: repeat-x;
+}
+
 

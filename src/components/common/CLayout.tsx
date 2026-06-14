@@ -90,11 +90,16 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
   if (!shouldShowLayout) return <>{children}</>
 
   return (
-    <div className={`flex min-h-screen flex-col ${isMobile ? 'tma-container' : ''}`}>
+    <div className={`flex min-h-screen flex-col bg-white ${isMobile ? 'tma-container' : ''}`}>
+      {/* Milliy-Classic Top Strip */}
+      <div className="h-1.5 w-full bg-[#0052B4] shadow-sm z-[100]" />
+      
       {!isMobile && <CHeader />}
 
-      <main className={`flex-grow ${isMobile ? 'pb-20' : 'container mx-auto px-4'}`}>
-        {children}
+      <main className={`flex-grow ${isMobile ? 'pb-24' : 'bg-white'}`}>
+        <div className="relative">
+          {children}
+        </div>
       </main>
 
       {!isMobile && <CFooter />}

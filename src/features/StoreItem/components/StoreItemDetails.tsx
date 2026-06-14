@@ -1,7 +1,7 @@
-import { useQueries, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
-import { getProducts, getStoreItemCategories } from '../api'
+import { getStoreItemCategories } from '../api'
 import HeartIcon from '@/components/icons/heart-icon'
 import StarIcon from '@/components/icons/star'
 import ProductCard from './ProductCard'
@@ -77,7 +77,7 @@ const StoreItemDetails = ({
 
   const { activeCategoryId, scrollTrigger, setActiveCategoryId } = useCategoryScrollStore()
 
-  const { data: categoriesData } = useQuery({
+  const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
     queryKey: ['item-base-categories', slug],
     queryFn: () => getStoreItemCategories({ id: slug as string }),
     enabled: !!slug,
@@ -86,18 +86,6 @@ const StoreItemDetails = ({
   const categoryList: any[] = (categoriesData?.data?.categories || []).filter(
     (cat: any) => cat.is_active
   )
-
-  const productQueries = useQueries({
-    queries: categoryList.map((cat) => ({
-      queryKey: ['products', slug, cat.id],
-      queryFn: () =>
-        getProducts({
-          uuid: slug as string,
-          categoryUuid: String(cat?.category_details?.uuid),
-        }),
-      enabled: !!slug && categoryList.length > 0,
-    })),
-  })
 
   // ─── 1. Sidebar click → scroll ─────────────────────────────────────────────
   // scrollTrigger har sidebar click da oshadi → shu useEffect ishlaydi
@@ -282,35 +270,33 @@ const StoreItemDetails = ({
 
       {/* ── Kategoriyalar + Mahsulotlar ────────────────────────────────────────── */}
       <div className="mt-5 space-y-10">
-        {categoryList.map((cat, index) => {
-          const query = productQueries[index]
-          const products: any[] = query?.data?.data || []
-          const isProductsLoading = query?.isLoading
-          const activeProducts = products.filter((p) => p.is_active && p.is_available)
+        {categoriesLoading ? (
+          <ProductGridSkeleton />
+        ) : (
+          categoryList.map((cat) => {
+            const products: any[] = cat.products || []
+            const activeProducts = products.filter((p: any) => p.is_active && p.is_available)
 
-          if (!isProductsLoading && activeProducts.length === 0) return null
+            if (activeProducts.length === 0) return null
 
-          return (
-            <div key={cat.id} id={`category-section-${cat.id}`}>
-              <div className="mb-3 flex items-center gap-2">
-                {cat.category_details?.logo && (
-                  <img
-                    src={cat.category_details.logo}
-                    alt={cat.category_details.name}
-                    className="h-6 w-6 rounded-full object-cover"
-                  />
-                )}
-                <h2 className="text-[16px] font-bold text-[#0c0c0c]">
-                  {cat.category_details?.name || cat.name}
-                </h2>
-                <span className="text-[13px] text-[#9CA3AF]">
-                  {isProductsLoading ? '' : `${activeProducts.length} ta`}
-                </span>
-              </div>
+            return (
+              <div key={cat.id} id={`category-section-${cat.id}`}>
+                <div className="mb-3 flex items-center gap-2">
+                  {cat.category_details?.logo && (
+                    <img
+                      src={cat.category_details.logo}
+                      alt={cat.category_details.name}
+                      className="h-6 w-6 rounded-full object-cover"
+                    />
+                  )}
+                  <h2 className="text-[16px] font-bold text-[#0c0c0c]">
+                    {cat.category_details?.name || cat.name}
+                  </h2>
+                  <span className="text-[13px] text-[#9CA3AF]">
+                    {`${activeProducts.length} ta`}
+                  </span>
+                </div>
 
-              {isProductsLoading ? (
-                <ProductGridSkeleton />
-              ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {activeProducts.map((product: any) => (
                     <ProductCard 
@@ -327,10 +313,10 @@ const StoreItemDetails = ({
                     />
                   ))}
                 </div>
-              )}
-            </div>
-          )
-        })}
+              </div>
+            )
+          })
+        )}
       </div>
     </>
   )

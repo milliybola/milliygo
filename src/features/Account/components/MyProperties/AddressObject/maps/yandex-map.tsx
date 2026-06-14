@@ -19,7 +19,7 @@ export default function YandexMap({ form }: { form: UseFormReturn<any> }): React
   return (
     <YMaps
       query={{
-        lang: locale === 'uz' ? 'uz_UZ' : locale === 'ru' ? 'ru_RU' : ('en_US' as any),
+        lang: (locale === 'uz' ? 'uz_UZ' : locale === 'ru' ? 'ru_RU' : 'en_US') as any,
       }}
     >
       <Map

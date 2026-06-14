@@ -83,14 +83,14 @@ function RestaurantsList() {
   return (
     <div className="mb-10 flex flex-col gap-6">
       {/* Title */}
-      <div className="container px-4">
+      <div className="px-4 md:px-0">
         <h2 className="section-title">Saralangan restoranlar</h2>
         <p className="section-subtitle">Eng mazali taomlar faqat bizda</p>
       </div>
 
       {/* Category filter bar */}
       {!categoriesLoading && categoryList.length > 0 && (
-        <div className="px-4">
+        <div className="px-4 md:px-0">
           <div className="cat-scroll flex items-center gap-3 overflow-x-auto hide-scrollbar pb-1">
             <button
               onClick={() => setActiveCategory(null)}
@@ -119,7 +119,7 @@ function RestaurantsList() {
       )}
 
       {categoriesLoading ? (
-        <div className="container grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3 px-4">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-3 px-4 md:px-0">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <SkeletonCard key={i} />
           ))}
@@ -150,7 +150,7 @@ function RestaurantsList() {
           </button>
         </div>
       ) : (
-        <div className="container grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-2 lg:grid-cols-3 px-4">
+        <div className="grid grid-cols-2 gap-x-5 gap-y-7 sm:grid-cols-2 lg:grid-cols-3 px-4 md:px-0">
           {!categoriesLoading &&
             filteredRestaurants.map((val: IPartner, i: number) => {
               const secureImage = val?.banner?.replace('http://', 'https://')

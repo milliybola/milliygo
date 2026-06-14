@@ -6,9 +6,10 @@ import { AuthContext } from '@/features/Account/auth/context/authContext'
 import { message } from 'antd'
 import { useLocationStore } from '@/store/useLocationStore'
 
-const DELIVERY_FEE = 8000
-const FREE_DELIVERY_THRESHOLD = 60000
-const SERVICE_FEE_PERCENT = 0.1 // 10%
+import { useQuery } from '@tanstack/react-query'
+import { getStoreItemCategories } from '../api'
+
+const SERVICE_FEE_PERCENT = 0 // 0% for now
 
 const StoreItemCart = ({
     restaurantData,
@@ -30,10 +31,24 @@ const StoreItemCart = ({
 
     const { isInServiceArea } = useLocationStore()
 
+    const { data: categoriesData } = useQuery({
+        queryKey: ['item-base-categories', slug],
+        queryFn: () => getStoreItemCategories({ id: slug as string }),
+        enabled: !!slug,
+    })
+
+    const partnerData = categoriesData?.data
+    const deliveryFee = partnerData?.delivery_fee !== undefined ? Number(partnerData.delivery_fee) : 8000
+    const freeDeliveryThreshold = partnerData?.free_delivery_threshold !== undefined ? Number(partnerData.free_delivery_threshold) : 60000
+    const minOrderAmount = partnerData?.min_order_amount !== undefined ? Number(partnerData.min_order_amount) : 0
+
     const subtotal = cartItems.reduce((s: number, i: any) => s + i.price * i.quantity, 0)
     const serviceFee = Math.round(subtotal * SERVICE_FEE_PERCENT)
-    const remaining = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal)
-    const total = subtotal + (remaining > 0 ? DELIVERY_FEE : 0)
+    const remaining = Math.max(0, freeDeliveryThreshold - subtotal)
+    const activeDeliveryFee = remaining > 0 ? deliveryFee : 0
+    const total = subtotal + activeDeliveryFee
+    const isMinOrderSatisfied = subtotal >= minOrderAmount
+    const canCheckout = isInServiceArea && isMinOrderSatisfied
 
     const fmt = (n: number) =>
         n.toLocaleString('uz-UZ').replace(/,/g, ' ') + " so'm"
@@ -139,9 +154,13 @@ const StoreItemCart = ({
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-[12px] font-semibold text-gray-900">
-                                Yetkazib berish {fmt(DELIVERY_FEE)}
+                                Yetkazib berish: {activeDeliveryFee === 0 ? "Bepul" : fmt(deliveryFee)}
                             </p>
-
+                            {activeDeliveryFee > 0 && freeDeliveryThreshold > 0 && (
+                                <p className="text-[10px] text-gray-400 mt-0.5">
+                                    Yana {fmt(remaining)}lik buyurtma qilsangiz, bepul!
+                                </p>
+                            )}
                         </div>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2">
                             <circle cx="12" cy="12" r="10" />
@@ -150,8 +169,23 @@ const StoreItemCart = ({
                         </svg>
                     </div>
 
+                    {/* Minimum order amount warning */}
+                    {subtotal > 0 && !isMinOrderSatisfied && (
+                        <div className="mx-4 mb-3 rounded-xl bg-amber-50 border border-amber-100 p-2.5 text-[12px] text-amber-800 font-semibold flex items-start gap-2">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mt-0.5 flex-shrink-0">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                            <span>
+                                Eng kam buyurtma miqdori {fmt(minOrderAmount)}. Yana {fmt(minOrderAmount - subtotal)}lik mahsulot qo'shing.
+                            </span>
+                        </div>
+                    )}
+
                     <div className="px-4 pb-4">
                         <button
+                            disabled={!canCheckout}
                             onClick={() => {
                                 if (!isInServiceArea) {
                                     message.warning('Kechirasiz, bu hududda xizmat ko\'rsata olmaymiz. Iltimos, xizmat hududini tanlang.')
@@ -163,16 +197,20 @@ const StoreItemCart = ({
                                     openLogin?.()
                                 }
                             }}
-                            className={`w-full transition-all rounded-2xl py-3.5 flex items-center justify-between px-5 shadow-sm ${
-                                !isInServiceArea 
-                                ? 'bg-gray-200 cursor-not-allowed opacity-70' 
-                                : 'bg-[#FFD600] hover:bg-[#FFC800] active:scale-[0.98]'
+                            className={`w-full active:scale-[0.98] transition-all rounded-2xl py-3.5 flex items-center justify-between px-5 shadow-sm ${
+                                canCheckout
+                                    ? 'bg-[#FFD600] hover:bg-[#FFC800] text-gray-900 font-bold'
+                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed font-bold'
                             }`}
                         >
-                            <span className="text-[15px] font-bold text-gray-900">
-                                {!isInServiceArea ? 'Xizmat hududidan tashqari' : 'Davom etish'}
+                            <span className="text-[15px]">
+                                {!isInServiceArea 
+                                    ? 'Xizmat hududidan tashqari' 
+                                    : isMinOrderSatisfied 
+                                        ? 'Davom etish' 
+                                        : `Eng kam buyurtma: ${fmt(minOrderAmount)}`}
                             </span>
-                            <span className="text-[15px] font-bold text-gray-900">{fmt(total)}</span>
+                            {canCheckout && <span className="text-[15px]">{fmt(total)}</span>}
                         </button>
                     </div>
                 </>

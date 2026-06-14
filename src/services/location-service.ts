@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { YANDEX_API_KEY } from '@/constants/api-keys'
+import request from '@/utils/axios'
 
 export interface YandexAddressOption {
   label: string
@@ -7,7 +8,38 @@ export interface YandexAddressOption {
   coords: [number, number]
 }
 
+export interface PopularLocation {
+  uuid: string
+  name: string
+  location_type: string
+  location_type_display: string
+  address: string
+  orientir?: string
+  latitude: string
+  longitude: string
+}
+
+export interface PopularLocationsResponse {
+  success: boolean
+  data: {
+    count: number
+    locations: PopularLocation[]
+  }
+}
+
 export const LocationService = {
+  getPopularLocations: async (params?: {
+    search?: string
+    location_type?: string
+    page?: number
+  }): Promise<PopularLocationsResponse> => {
+    return request({
+      url: '/locations/',
+      method: 'get',
+      params,
+    })
+  },
+
   reverseGeocode: async (lat: number, lng: number): Promise<string> => {
     try {
       const response = await axios.get(

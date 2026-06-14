@@ -17,7 +17,7 @@ interface CartDetailProps {
 
 const CartDetail = ({ restaurantData, restaurantLoading }: CartDetailProps) => {
   const router = useRouter()
-  const { slug: querySlug } = router.query
+  const querySlug = (router.query.store || router.query.slug) as string
   const { carts, updateQuantity, removeItem } = useCartStore()
 
   // If a slug is provided, we focus on that one. 

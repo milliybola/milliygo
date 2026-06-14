@@ -39,7 +39,7 @@ function StoreList() {
   return (
     <div className="mb-8 flex flex-col gap-4">
       {/* Header */}
-      <div className="container flex justify-between items-end px-4">
+      <div className="flex justify-between items-end px-4 md:px-0">
         <div>
           <h2 className="section-title">Hamkor do'konlar</h2>
           <p className="section-subtitle">Eng yaqin va sifatli mahsulotlar</p>
@@ -85,7 +85,7 @@ function StoreList() {
       </div>
 
       {/* Carousel for Desktop */}
-      <div className="hidden md:block container px-4">
+      <div className="hidden md:block px-4 md:px-0">
         {!isLoading && chunkedRestaurants.length > 0 && (
           <div className="relative group">
             <Carousel ref={carouselRef} dots={false} infinite={false}>

@@ -82,7 +82,7 @@ const App = ({ Component, pageProps }: AppProps) => {
               <AuthProvider>
                 <NextNProgress color={colors.primary} height={2} options={{ showSpinner: false }} />
                 <GlobalLoginModal />
-                <YMaps query={{ apikey: YANDEX_API_KEY, lang: 'uz_UZ' }}>
+                <YMaps query={{ apikey: YANDEX_API_KEY, lang: 'uz_UZ' as any }}>
                   <CLayout>
                     <Component {...pageProps} />
                     <SupportChat />

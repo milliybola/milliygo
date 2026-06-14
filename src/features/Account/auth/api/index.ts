@@ -21,6 +21,22 @@ export async function login(
     return res
 }
 
+export async function sendTelegramOtp(
+    data: { code: string },
+    visitor_id: string
+): Promise<any> {
+    const res: any = await requestAuth({
+        url: '/auth/user/send-otp/',
+        method: 'post',
+        headers: {
+            'X-Device-Id': visitor_id,
+        },
+        data,
+    })
+
+    return res
+}
+
 export async function confirmOTP(data: any): Promise<AuthResponse> {
   const res: AuthResponse = await requestAuth({
     url: '/account/check-otp/',

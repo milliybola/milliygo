@@ -8,10 +8,11 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 
 import banner from '@/assets/uz-unesco.jpg'
-import { login } from '@/features/Account/auth/api'
+import { login, sendTelegramOtp } from '@/features/Account/auth/api'
 import { AuthContext } from '@/features/Account/auth/context/authContext'
 import AgreeWithTerms from '@/features/Account/components/Auth/agree-with-terms'
 import FirstStep from '@/features/Account/components/Auth/first-step'
+import TelegramAuthStep from '@/features/Account/components/Auth/telegram-auth-step'
 
 import Logo from '@/components/icons/logo'
 import useWindowSize from '@/hooks/useWindowsSize'
@@ -30,6 +31,7 @@ function Login({ isModal }: { isModal?: boolean }) {
   const isAuthenticated = authStore?.isAuthenticated
   const loginAction = authStore?.login
   const fingerPrintRef = useRef<any>(null)
+  const [step, setStep] = useState<'first-step' | 'telegram'>('first-step')
 
   const { mutate: loginActionMutate, isPending } = useMutation({
     mutationFn: (data: { phone_number: string; password?: string }) =>
@@ -55,6 +57,29 @@ function Login({ isModal }: { isModal?: boolean }) {
     },
   })
 
+  const { mutate: telegramOtpMutate, isPending: isTelegramPending } = useMutation({
+    mutationFn: (code: string) =>
+      sendTelegramOtp({ code }, fingerPrintRef.current?.visitorId || ''),
+    onSuccess: (res) => {
+      localStorage.setItem('refresh_token', res.refresh)
+      localStorage.setItem('access_token', res.access)
+      loginAction(res.user)
+      const { user_permissions: _permissions, ...shortUserInfo } = res.user
+      setCookie('userInfo', shortUserInfo)
+
+      message.success(t('user.login-success'), 2)
+
+      if (isModal) {
+        authContext?.setLoginModalOpen(false)
+      } else {
+        router.push('/account/account-management')
+      }
+    },
+    onError: (err: AxiosError) => {
+      console.error('Telegram OTP error:', err)
+      message.error('Kod noto\'g\'ri yoki muddati tugagan')
+    },
+  })
 
 
   useEffect(() => {
@@ -103,11 +128,20 @@ function Login({ isModal }: { isModal?: boolean }) {
             <div className="mb-3 hidden w-full justify-center dmd:flex">
               {/* <Logo className="text-[24px]" /> */}
             </div>
-            <FirstStep
-              onLogin={(data) => loginActionMutate(data)}
-              isLoading={isPending}
-              nextPageHandler={() => { }}
-            />
+            {step === 'first-step' ? (
+              <FirstStep
+                onLogin={(data) => loginActionMutate(data)}
+                isLoading={isPending}
+                nextPageHandler={() => { }}
+                onTelegramClick={() => setStep('telegram')}
+              />
+            ) : (
+              <TelegramAuthStep
+                isLoading={isTelegramPending}
+                onVerify={(code) => telegramOtpMutate(code)}
+                onBack={() => setStep('first-step')}
+              />
+            )}
 
             {/* <div className="mt-6">
               <div className="relative mb-6 text-center">

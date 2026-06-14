@@ -17,7 +17,8 @@ import dayjs from 'dayjs'
 const { Title, Text } = Typography
 const { TextArea } = Input
 
-import { createOrder } from '../api'
+import { useQuery } from '@tanstack/react-query'
+import { createOrder, getStoreItemCategories } from '../api'
 
 const StoreItemCart = ({
     restaurantData,
@@ -29,7 +30,7 @@ const StoreItemCart = ({
     customLogic?: any
 }) => {
     const router = useRouter()
-    const { slug: querySlug } = router.query
+    const querySlug = (router.query.store || router.query.slug) as string
     const { carts, clearCart } = useCartStore()
     const authContext = useContext(AuthContext) as any
     const isAuthenticated = authContext?.authStore?.isAuthenticated
@@ -63,12 +64,27 @@ const StoreItemCart = ({
     const loading = customLogic?.orderLoading ?? localLoading
 
 
-    // Calculate subtotal
     const subtotal = useMemo(() => {
         return querySlug 
             ? (carts[querySlug as string]?.items?.reduce((s: number, i: any) => s + i.price * i.quantity, 0) || 0)
             : Object.values(carts).flatMap(c => c.items || []).reduce((s: number, i: any) => s + i.price * i.quantity, 0)
     }, [carts, querySlug])
+
+    const { data: categoriesData } = useQuery({
+        queryKey: ['item-base-categories', querySlug],
+        queryFn: () => getStoreItemCategories({ id: querySlug as string }),
+        enabled: !!querySlug,
+    })
+
+    const partnerData = categoriesData?.data
+    const deliveryFee = partnerData?.delivery_fee !== undefined ? Number(partnerData.delivery_fee) : 8000
+    const freeDeliveryThreshold = partnerData?.free_delivery_threshold !== undefined ? Number(partnerData.free_delivery_threshold) : 60000
+    const minOrderAmount = partnerData?.min_order_amount !== undefined ? Number(partnerData.min_order_amount) : 0
+
+    const remaining = Math.max(0, freeDeliveryThreshold - subtotal)
+    const activeDeliveryFee = remaining > 0 ? deliveryFee : 0
+    const total = subtotal + activeDeliveryFee
+    const isMinOrderSatisfied = subtotal >= minOrderAmount
 
     const fmt = (n: number) => n.toLocaleString('uz-UZ').replace(/,/g, ' ')
 
@@ -203,21 +219,59 @@ const StoreItemCart = ({
                     />
                 </div>
 
-                <div className="mt-6 pt-6 border-t border-gray-100">
-                    <div className="flex items-center justify-between mb-6 px-1">
+                <div className="mt-6 pt-6 border-t border-gray-100 space-y-4">
+                    <div className="flex items-center justify-between px-1">
+                        <Text className="text-[14px] text-gray-500 font-medium">Mahsulotlar summasi:</Text>
+                        <Text className="text-[15px] font-bold text-gray-800">{fmt(subtotal)} UZS</Text>
+                    </div>
+                    <div className="flex items-center justify-between px-1">
+                        <Text className="text-[14px] text-gray-500 font-medium">Yetkazib berish:</Text>
+                        <Text className="text-[15px] font-bold text-gray-800">
+                            {activeDeliveryFee === 0 ? "Bepul" : `${fmt(deliveryFee)} UZS`}
+                        </Text>
+                    </div>
+                    {activeDeliveryFee > 0 && freeDeliveryThreshold > 0 && (
+                        <div className="text-[11px] text-gray-400 text-right px-1">
+                            Yana {fmt(remaining)} UZSlik buyurtma qilsangiz, bepul!
+                        </div>
+                    )}
+                    <div className="h-px bg-gray-100" />
+                    <div className="flex items-center justify-between px-1">
                         <Text className="text-[15px] text-gray-500 font-medium font-['Outfit']">Jami summa:</Text>
                         <div className="text-right">
-                            <span className="text-[22px] font-bold text-gray-900">{fmt(subtotal)}</span>
+                            <span className="text-[22px] font-bold text-gray-900">{fmt(total)}</span>
                             <span className="text-[15px] font-bold text-gray-900 ml-1.5 uppercase">UZS</span>
                         </div>
                     </div>
 
+                    {/* Minimum order amount warning */}
+                    {!isMinOrderSatisfied && (
+                        <div className="rounded-xl bg-amber-50 border border-amber-100 p-2.5 text-[12px] text-amber-800 font-semibold flex items-start gap-2">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mt-0.5 flex-shrink-0">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                            <span>
+                                Eng kam buyurtma miqdori {fmt(minOrderAmount)} UZS. Yana {fmt(minOrderAmount - subtotal)} UZSlik mahsulot qo'shing.
+                            </span>
+                        </div>
+                    )}
+
                     <button
                         onClick={handleCreateOrder}
-                        disabled={subtotal === 0 || loading}
-                        className={`w-full ${subtotal === 0 || loading ? 'bg-gray-200 cursor-not-allowed opacity-60' : 'bg-[#FFD600] hover:bg-[#FFC800] active:scale-[0.98]'} transition-all rounded-[20px] py-4.5 text-[17px] font-bold text-gray-900 shadow-[0_8px_20px_rgba(255,214,0,0.25)] flex items-center justify-center h-[58px]`}
+                        disabled={subtotal === 0 || loading || !isMinOrderSatisfied}
+                        className={`w-full transition-all rounded-[20px] py-4.5 text-[17px] font-bold flex items-center justify-center h-[58px] shadow-[0_8px_20px_rgba(255,214,0,0.25)] ${
+                            subtotal === 0 || loading || !isMinOrderSatisfied
+                                ? 'bg-gray-200 cursor-not-allowed opacity-60 text-gray-400'
+                                : 'bg-[#FFD600] hover:bg-[#FFC800] active:scale-[0.98] text-gray-900'
+                        }`}
                     >
-                        {loading ? 'Yuborilmoqda...' : 'Buyurtma berish'}
+                        {loading 
+                            ? 'Yuborilmoqda...' 
+                            : isMinOrderSatisfied 
+                                ? 'Buyurtma berish' 
+                                : `Eng kam buyurtma: ${fmt(minOrderAmount)} UZS`}
                     </button>
                 </div>
             </div>

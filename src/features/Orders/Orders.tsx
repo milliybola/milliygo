@@ -13,6 +13,9 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
     ACCEPTED: { label: 'Tasdiqlandi', color: 'cyan', icon: <CheckCircleOutlined /> },
     PREPARING: { label: 'Tayyorlanmoqda', color: 'orange', icon: <ClockCircleOutlined /> },
     READY: { label: 'Tayyor', color: 'green', icon: <CheckCircleOutlined /> },
+    READY_FOR_PICKUP: { label: 'Olib ketishga tayyor', color: 'lime', icon: <CheckCircleOutlined /> },
+    PICKED_UP: { label: 'Kuryer qabul qildi', color: 'blue', icon: <ClockCircleOutlined /> },
+    ON_THE_WAY: { label: 'Yo\'lda', color: 'purple', icon: <ClockCircleOutlined /> },
     DELIVERING: { label: 'Yetkazilmoqda', color: 'purple', icon: <ClockCircleOutlined /> },
     DELIVERED: { label: 'Yetkazildi', color: 'success', icon: <CheckCircleOutlined /> },
     REJECTED: { label: 'Rad etildi', color: 'error', icon: <CloseCircleOutlined /> },
@@ -58,8 +61,8 @@ const OrderCard = ({ order }: { order: any }) => {
                 </Tag>
             </div>
 
-            <div className="flex items-center justify-between py-3 border-y border-gray-50/50">
-                <div className="flex items-center gap-2">
+            <div className="py-3 border-y border-gray-50/50">
+                <div className="flex items-center gap-2 mb-3">
                     <div className="flex -space-x-3">
                         {order.items?.slice(0, 3).map((item: any) => (
                             <div 
@@ -74,14 +77,25 @@ const OrderCard = ({ order }: { order: any }) => {
                             </div>
                         ))}
                     </div>
-                    <Text className="text-[13px] text-gray-500 font-medium">
+                    <Text className="text-[13px] text-gray-500 font-medium font-bold">
                         {order.items?.length} ta mahsulot
                     </Text>
                 </div>
-                <div className="flex flex-col items-end">
-                    <Text className="text-[15px] font-extrabold text-[#111]">
-                        {fmt(order.total_price)} <span className="text-[10px]">UZS</span>
-                    </Text>
+                <div className="space-y-1.5 text-[12px] text-gray-500 pt-2.5 border-t border-gray-50/50">
+                    <div className="flex justify-between">
+                        <span>Mahsulotlar summasi:</span>
+                        <span className="font-semibold text-gray-900">{fmt(Number(order.total_price) - Number(order.delivery_fee))} UZS</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span>Yetkazib berish:</span>
+                        <span className="font-semibold text-gray-900">
+                            {Number(order.delivery_fee) === 0 ? "Bepul" : `${fmt(order.delivery_fee)} UZS`}
+                        </span>
+                    </div>
+                    <div className="flex justify-between text-[14px] font-extrabold text-[#111] pt-1">
+                        <span>Jami:</span>
+                        <span>{fmt(order.total_price)} UZS</span>
+                    </div>
                 </div>
             </div>
 

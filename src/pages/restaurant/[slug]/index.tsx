@@ -1,6 +1,6 @@
 import CBreadcrumb from '@/components/common/CBreadcrumb'
 import { useTranslations } from 'next-intl'
-import StoreItem from '@/features/StoreItem/StoreItem'
+import RestaurantItem from '@/features/Restaurant/RestaurantItem'
 
 import { baseURL } from '@/utils/axios'
 
@@ -44,7 +44,7 @@ const StoreItemPage = () => {
 
   return (
     <main className="bg-white mb-20 px-0">
-      <StoreItem />
+      <RestaurantItem />
     </main>
   )
 }

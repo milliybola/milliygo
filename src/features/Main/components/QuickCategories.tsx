@@ -14,7 +14,7 @@ const QuickCategories = () => {
 
   if (isLoading) {
     return (
-      <div className="flex gap-4 overflow-x-auto px-4 py-2 hide-scrollbar">
+      <div className="flex gap-4 overflow-x-auto px-4 md:px-0 py-2 hide-scrollbar">
         {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="flex flex-col items-center gap-2 shrink-0">
             <Skeleton.Avatar active size={64} shape="circle" />
@@ -26,10 +26,10 @@ const QuickCategories = () => {
   }
 
   return (
-    <div className="flex gap-5 overflow-x-auto px-4 py-4 hide-scrollbar">
+    <div className="flex gap-5 overflow-x-auto px-4 md:px-0 py-4 hide-scrollbar">
       {categories.map((cat) => {
-        // Find first partner banner as a placeholder icon if no category image exists
-        const iconSrc = cat.partners?.[0]?.banner || '/placeholder-icon.png'
+        // Find first partner logo as a placeholder icon if no category image exists
+        const iconSrc = cat?.logo || '/placeholder-icon.png'
         
         return (
           <div key={cat.id} className="flex flex-col items-center gap-2 shrink-0 group cursor-pointer active:scale-95 transition-transform">

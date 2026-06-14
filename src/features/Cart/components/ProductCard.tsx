@@ -3,8 +3,7 @@ import { useCartStore } from '@/store/cartStore'
 
 const ProductCard = ({ product }: { product: any }) => {
     const router = useRouter()
-    const { slug } = router.query
-    const storeId = slug as string
+    const storeId = (router.query.store || router.query.slug) as string
 
     const { carts, addItem, updateQuantity } = useCartStore()
     const cartData = carts[storeId]

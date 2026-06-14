@@ -27,6 +27,9 @@ const statusConfig: Record<string, { label: string; color: string; icon: any; st
     ACCEPTED: { label: 'Tasdiqlandi', color: '#06B6D4', icon: <CheckCircleOutlined />, step: 1, theme: 'cyan' },
     PREPARING: { label: 'Tayyorlanmoqda', color: '#F59E0B', icon: <LoadingOutlined />, step: 2, theme: 'orange' },
     READY: { label: 'Tayyor', color: '#10B981', icon: <CheckCircleOutlined />, step: 3, theme: 'emerald' },
+    READY_FOR_PICKUP: { label: 'Olib ketishga tayyor', color: '#10B981', icon: <CheckCircleOutlined />, step: 3, theme: 'emerald' },
+    PICKED_UP: { label: 'Kuryer qabul qildi', color: '#8B5CF6', icon: <TruckOutlined />, step: 4, theme: 'violet' },
+    ON_THE_WAY: { label: 'Yo\'lda', color: '#8B5CF6', icon: <TruckOutlined />, step: 4, theme: 'violet' },
     DELIVERING: { label: 'Yetkazilmoqda', color: '#8B5CF6', icon: <TruckOutlined />, step: 4, theme: 'violet' },
     DELIVERED: { label: 'Yetkazildi', color: '#059669', icon: <CheckCircleOutlined />, step: 5, theme: 'success' },
     REJECTED: { label: 'Rad etildi', color: '#EF4444', icon: <InfoCircleOutlined />, step: 0, theme: 'error' },
@@ -275,8 +278,14 @@ const OrderDetails = ({ uuid }: { uuid: string }) => {
 
                         <div className="space-y-3">
                             <div className="flex items-center justify-between text-[16px]">
-                                <Text className="text-gray-400 font-bold">Summa:</Text>
-                                <Text className="font-bold text-gray-900">{fmt(order.total_price)} UZS</Text>
+                                <Text className="text-gray-400 font-bold">Mahsulotlar summasi:</Text>
+                                <Text className="font-bold text-gray-900">{fmt(Number(order.total_price) - Number(order.delivery_fee))} UZS</Text>
+                            </div>
+                            <div className="flex items-center justify-between text-[16px]">
+                                <Text className="text-gray-400 font-bold">Yetkazib berish:</Text>
+                                <Text className="font-bold text-gray-900">
+                                    {Number(order.delivery_fee) === 0 ? "Bepul" : `${fmt(order.delivery_fee)} UZS`}
+                                </Text>
                             </div>
                             <div className="flex items-center justify-between text-[20px] pt-4">
                                 <Text className="text-gray-900 font-black">Jami:</Text>
@@ -364,7 +373,7 @@ const OrderDetails = ({ uuid }: { uuid: string }) => {
                         </div>
 
                         <div className="h-[240px] w-full relative group">
-                            <YMaps query={{ apikey: YANDEX_API_KEY, lang: 'uz_UZ' }}>
+                            <YMaps query={{ apikey: YANDEX_API_KEY, lang: 'uz_UZ' as any }}>
                                 <Map
                                     state={{
                                         center: [Number(order.latitude), Number(order.longitude)],

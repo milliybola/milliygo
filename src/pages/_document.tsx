@@ -4,18 +4,14 @@ import { createCache, extractStyle, StyleProvider } from '@ant-design/cssinjs'
 
 import type { DocumentContext } from 'next/document'
 
-const excludedLocales = ['uz', 'ru', 'en']
 const MyDocument = ({ locale }: DocumentContext) => {
   return (
     <Html lang={locale}>
       <Head>
-        <Script src="/assets/scripts/translation.js" strategy="beforeInteractive" />
-        <Script
-          type="text/javascript"
-          src="https://translate.google.com/translate_a/element.js?cb=TranslateInit"
-          strategy="afterInteractive"
-        />
-
+        <meta name="google" content="notranslate" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
         <Script
           src="https://unpkg.com/react-scan/dist/auto.global.js"
           type="text/javascript"
@@ -23,7 +19,7 @@ const MyDocument = ({ locale }: DocumentContext) => {
         />
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
       </Head>
-      <body className={excludedLocales?.includes(locale || '') ? 'notranslate' : 'translate'}>
+      <body className="notranslate">
         <Main />
         <NextScript />
       </body>

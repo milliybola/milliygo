@@ -18,7 +18,7 @@ export default function ContractYandexMap({ form }: any): ReactElement {
   return (
     <YMaps
       query={{
-        lang: locale === 'uz' ? 'uz_UZ' : locale === 'ru' ? 'ru_RU' : ('en_US' as any),
+        lang: (locale === 'uz' ? 'uz_UZ' : locale === 'ru' ? 'ru_RU' : 'en_US') as any,
       }}
     >
       <Map

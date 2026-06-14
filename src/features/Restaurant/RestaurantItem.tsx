@@ -107,6 +107,10 @@ const StoreItem = () => {
   const isAuthenticated = authContext?.authStore?.isAuthenticated
   const openLogin = authContext?.openLogin
 
+  const partnerData = categoriesData?.data as any
+  const minOrderAmount = partnerData?.min_order_amount !== undefined ? Number(partnerData.min_order_amount) : 0
+  const isMinOrderSatisfied = subtotal >= minOrderAmount
+
   return (
     <div className="container mx-auto px-4 pb-20 mt-4 relative">
       {/* Header section */}
@@ -143,6 +147,7 @@ const StoreItem = () => {
       {subtotal > 0 && (
         <div className="xl:hidden fixed bottom-6 left-4 right-4 z-50">
           <button
+            disabled={!isMinOrderSatisfied}
             onClick={() => {
               if (isAuthenticated) {
                 router.push(`/checkout?store=${slug}`)
@@ -150,19 +155,25 @@ const StoreItem = () => {
                 openLogin?.()
               }
             }}
-            className="w-full bg-[#FFD600] active:scale-[0.98] transition-all rounded-2xl py-4 px-6 flex items-center justify-between shadow-[0_8px_24px_rgba(255,214,0,0.3)] border border-white/20"
+            className={`w-full active:scale-[0.98] transition-all rounded-2xl py-4 px-6 flex items-center justify-between shadow-[0_8px_24px_rgba(255,214,0,0.3)] border border-white/20 ${
+              isMinOrderSatisfied
+                ? 'bg-[#FFD600] text-gray-900 font-bold'
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed font-bold'
+            }`}
           >
             <div className="flex items-center gap-3">
-              <div className="bg-white/20 rounded-lg p-1.5">
+              <div className={isMinOrderSatisfied ? "bg-white/20 rounded-lg p-1.5" : "bg-gray-200 rounded-lg p-1.5"}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
                   <line x1="3" y1="6" x2="21" y2="6" />
                   <path d="M16 10a4 4 0 01-8 0" />
                 </svg>
               </div>
-              <span className="text-[15px] font-bold text-gray-900">Savatni ko'rish</span>
+              <span className="text-[15px]">
+                {isMinOrderSatisfied ? "Savatni ko'rish" : `Eng kam buyurtma: ${minOrderAmount.toLocaleString('uz-UZ').replace(/,/g, ' ')} so'm`}
+              </span>
             </div>
-            <span className="text-[17px] font-bold text-gray-900">
+            <span className="text-[17px]">
               {subtotal.toLocaleString('uz-UZ').replace(/,/g, ' ')} so'm
             </span>
           </button>

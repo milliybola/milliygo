@@ -91,7 +91,7 @@ const ProfileMenuPopover: FC<{ light?: boolean }> = ({ light }) => {
         onOpenChange={setShowPopover}
         content={
           <Flex vertical>
-            <Link href="/account/account-management" aria-label={`open management route`}>
+            {/* <Link href="/account/account-management" aria-label={`open management route`}>
               <button
                 onClick={() => setShowPopover(false)}
                 type="button"
@@ -101,9 +101,9 @@ const ProfileMenuPopover: FC<{ light?: boolean }> = ({ light }) => {
                 <UserRoundedIcon className="text-xl text-secondary" />
                 {t('account-management.title')}
               </button>
-            </Link>
+            </Link> */}
 
-            <Link href="/account/booking" aria-label={`open booking route`}>
+            {/* <Link href="/account/booking" aria-label={`open booking route`}>
               <button
                 aria-label={t('booking.title')}
                 onClick={() => setShowPopover(false)}
@@ -127,7 +127,7 @@ const ProfileMenuPopover: FC<{ light?: boolean }> = ({ light }) => {
                   {t('my-properties.title')}
                 </button>
               </Link>
-            )}
+            )} */}
             {/* <Link href="/account/properties">
               <button
                 type="button"
@@ -138,7 +138,7 @@ const ProfileMenuPopover: FC<{ light?: boolean }> = ({ light }) => {
                 {t('my-properties.title')}
               </button>
             </Link> */}
-            <Link href="/account/reviews" aria-label={`open reviews route`}>
+            {/* <Link href="/account/reviews" aria-label={`open reviews route`}>
               <button
                 type="button"
                 aria-label={t('reviews.title')}
@@ -196,7 +196,7 @@ const ProfileMenuPopover: FC<{ light?: boolean }> = ({ light }) => {
                   {t('guides.guide-acc')}
                 </button>
               </Link>
-            ) : null}
+            ) : null} */}
 
             <button
               aria-label={t('buttons.log-out')}

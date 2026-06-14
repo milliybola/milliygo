@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState, useContext, useMemo } from 'react'
 
 import { useTranslations } from 'next-intl'
-import { getRestaurantDetail, createOrder } from './api'
+import { getRestaurantDetail, createOrder, getStoreItemCategories } from './api'
 import { getAccountMe } from '@/features/Account/api'
 
 import { AuthContext } from '@/features/Account/auth/context/authContext'
@@ -21,7 +21,8 @@ const { TextArea } = Input
 const CartFullPage = () => {
   const t = useTranslations()
   const router = useRouter()
-  const { slug: querySlug, id } = router.query
+  const querySlug = (router.query.store || router.query.slug) as string
+  const { id } = router.query
   const { carts, clearCart } = useCartStore()
 
   const authContext = useContext(AuthContext) as any
@@ -48,6 +49,12 @@ const CartFullPage = () => {
     enabled: !!querySlug,
   })
 
+  const { data: categoriesData } = useQuery({
+    queryKey: ['item-base-categories', querySlug],
+    queryFn: () => getStoreItemCategories({ id: querySlug as string }),
+    enabled: !!querySlug,
+  })
+
   const { data: userData } = useQuery({
     queryKey: ['account-me'],
     queryFn: getAccountMe,
@@ -61,6 +68,16 @@ const CartFullPage = () => {
       : Object.values(carts).flatMap(c => c.items || []).reduce((s: number, i: any) => s + i.price * i.quantity, 0)
   }, [carts, querySlug])
 
+  const partnerData = categoriesData?.data as any
+  const deliveryFee = partnerData?.delivery_fee !== undefined ? Number(partnerData.delivery_fee) : 8000
+  const freeDeliveryThreshold = partnerData?.free_delivery_threshold !== undefined ? Number(partnerData.free_delivery_threshold) : 50000
+  const minOrderAmount = partnerData?.min_order_amount !== undefined ? Number(partnerData.min_order_amount) : 0
+
+  const remaining = Math.max(0, freeDeliveryThreshold - subtotal)
+  const activeDeliveryFee = remaining > 0 ? deliveryFee : 0
+  const total = subtotal + activeDeliveryFee
+  const isMinOrderSatisfied = subtotal >= minOrderAmount
+
   const handleCreateOrder = () => {
     if (!isAuthenticated) {
       openLogin?.()
@@ -69,6 +86,10 @@ const CartFullPage = () => {
     if (!selectedCoords) {
       message.warning("Iltimos, yetkazib berish manzilini tanlang.")
       setIsLocationModalOpen(true)
+      return
+    }
+    if (!isMinOrderSatisfied) {
+      message.warning(`Eng kam buyurtma miqdori ${fmt(minOrderAmount)} UZS`)
       return
     }
     
@@ -216,22 +237,55 @@ const CartFullPage = () => {
                 <span className="text-[14px] text-gray-400 font-medium">Mahsulotlar summasi</span>
                 <span className="text-[15px] text-[#111] font-bold">{fmt(subtotal)} <span className="text-[10px]">UZS</span></span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[14px] text-gray-400 font-medium">Yetkazib berish</span>
+                <span className="text-[15px] text-[#111] font-bold">
+                  {activeDeliveryFee === 0 ? "Bepul" : `${fmt(activeDeliveryFee)} UZS`}
+                </span>
+              </div>
+              {activeDeliveryFee > 0 && freeDeliveryThreshold > 0 && (
+                <div className="text-[11px] text-gray-400 text-right">
+                  Yana {fmt(remaining)} UZSlik buyurtma qilsangiz, bepul!
+                </div>
+              )}
               <div className="h-px bg-gray-50 my-3" />
               <div className="flex items-center justify-between">
                 <span className="text-[17px] text-[#111] font-black">Jami:</span>
-                <span className="text-[24px] text-[#111] font-black tracking-tighter">{fmt(subtotal)} <span className="text-[13px]">UZS</span></span>
+                <span className="text-[24px] text-[#111] font-black tracking-tighter">{fmt(total)} <span className="text-[13px]">UZS</span></span>
               </div>
             </div>
 
+            {/* Minimum order amount warning */}
+            {!isMinOrderSatisfied && (
+              <div className="rounded-xl bg-amber-50 border border-amber-100 p-2.5 text-[12px] text-amber-800 font-semibold flex items-start gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mt-0.5 flex-shrink-0">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <span>
+                  Eng kam buyurtma miqdori {fmt(minOrderAmount)} UZS. Yana {fmt(minOrderAmount - subtotal)} UZSlik mahsulot qo'shing.
+                </span>
+              </div>
+            )}
+
             <button
               onClick={handleCreateOrder}
-              disabled={orderLoading}
-              className="w-full bg-[#FFD600] active:scale-[0.96] transition-all rounded-[24px] py-4.5 flex items-center justify-center gap-4 shadow-[0_12px_30px_rgba(255,214,0,0.35)] border-b-4 border-[#E6C000]"
+              disabled={orderLoading || !isMinOrderSatisfied}
+              className={`w-full active:scale-[0.96] transition-all rounded-[24px] py-4.5 flex items-center justify-center gap-4 shadow-[0_12px_30px_rgba(255,214,0,0.35)] border-b-4 ${
+                isMinOrderSatisfied
+                  ? 'bg-[#FFD600] border-[#E6C000]'
+                  : 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+              }`}
             >
-              <span className="text-[18px] font-black text-black">
-                {orderLoading ? 'YUBORILMOQDA...' : 'BUYURTMA BERISH'}
+              <span className={`text-[18px] font-black ${isMinOrderSatisfied ? 'text-black' : 'text-gray-400'}`}>
+                {orderLoading 
+                  ? 'YUBORILMOQDA...' 
+                  : isMinOrderSatisfied 
+                    ? 'BUYURTMA BERISH' 
+                    : `ENG KAM BUYURTMA: ${fmt(minOrderAmount)} UZS`}
               </span>
-              {!orderLoading && (
+              {!orderLoading && isMinOrderSatisfied && (
                 <div className="bg-black/5 rounded-full p-1.5">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="3">
                     <path d="M5 12h14M12 5l7 7-7 7" />
@@ -268,11 +322,20 @@ const CartFullPage = () => {
               </Text>
             </div>
             
+            <div className="flex items-center justify-between">
+              <Text className="text-[15px] text-gray-500">Mahsulotlar summasi:</Text>
+              <Text className="text-[15px] font-bold text-gray-900">{fmt(subtotal)} <span className="text-[10px]">UZS</span></Text>
+            </div>
+            <div className="flex items-center justify-between">
+              <Text className="text-[15px] text-gray-500">Yetkazib berish:</Text>
+              <Text className="text-[15px] font-bold text-gray-900">{activeDeliveryFee === 0 ? "Bepul" : `${fmt(activeDeliveryFee)} UZS`}</Text>
+            </div>
+            
             <div className="h-px bg-gray-200" />
             
             <div className="flex items-center justify-between">
               <Text className="text-[17px] font-bold text-[#111]">Umumiy summa:</Text>
-              <Text className="text-[20px] font-black text-[#111]">{fmt(subtotal)} <span className="text-[12px]">UZS</span></Text>
+              <Text className="text-[20px] font-black text-[#111]">{fmt(total)} <span className="text-[12px]">UZS</span></Text>
             </div>
           </div>
 

@@ -219,6 +219,7 @@ export interface ICategory {
   is_active?: boolean
   category_details?: { name: string; logo?: string; uuid?: string }
   partners: IPartner[]
+  products?: any[]
 }
 
 export interface ICategoryResponse {
