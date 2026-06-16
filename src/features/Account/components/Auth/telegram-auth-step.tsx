@@ -1,3 +1,4 @@
+import TelegramLogoIcon from '@/components/icons/telegram-logo'
 import { LeftOutlined } from '@ant-design/icons'
 import { Button, Form } from 'antd'
 import React, { ReactElement, useState } from 'react'
@@ -27,7 +28,7 @@ export default function TelegramAuthStep({ isLoading, onVerify, onBack }: IProps
       <div className="mb-6 flex cursor-pointer items-center" onClick={onBack}>
         <Button
           icon={<LeftOutlined />}
-          className="shadow-none border-none text-base bg-transparent font-medium hover:!bg-gray-100"
+          className="border-none bg-transparent text-base font-medium shadow-none hover:!bg-gray-100"
           shape="default"
           size="middle"
         >
@@ -36,23 +37,8 @@ export default function TelegramAuthStep({ isLoading, onVerify, onBack }: IProps
       </div>
 
       <div className="mb-6 flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-[16px] bg-[#2AABEE] text-white">
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M21.1213 2.15822C21.6508 1.94429 22.1868 2.45781 21.9902 2.99849L17.1517 16.3021C16.9452 16.87 16.1438 16.9457 15.836 16.4258L12.5709 10.9126C12.3842 10.5972 12.0306 10.4287 11.6669 10.4828L5.78762 11.3563C5.17646 11.4471 4.88726 10.6695 5.37894 10.2524L21.1213 2.15822Z"
-              fill="currentColor"
-            />
-            <path
-              d="M12.5709 10.9126L15.836 16.4258C16.1438 16.9457 15.6946 17.653 15.074 17.5501L10.0152 16.7115C9.72898 16.6641 9.47954 16.4862 9.35677 16.2238L7.16851 11.5546C6.91712 11.0181 7.47648 10.4578 8.02641 10.6976L11.6669 10.4828C12.0306 10.4287 12.3842 10.5972 12.5709 10.9126Z"
-              fill="currentColor"
-            />
-          </svg>
+        <div className="flex h-14 w-14 items-center justify-center rounded-[16px] text-[#2AABEE]">
+          <TelegramLogoIcon className="text-[40px]" />
         </div>
         <div>
           <h2 className="m-0 text-xl font-bold">Telegram orqali kirish</h2>
@@ -134,7 +120,7 @@ export default function TelegramAuthStep({ isLoading, onVerify, onBack }: IProps
           size="large"
           type="primary"
           shape="default"
-          className="!h-[56px] w-full mt-4 rounded-2xl border-none bg-[#2AABEE] text-base font-bold text-white shadow-none hover:!bg-[#229ED9]"
+          className="mt-4 !h-[56px] w-full rounded-2xl border-none bg-[#2AABEE] text-base font-bold text-white shadow-none hover:!bg-[#229ED9]"
           htmlType="submit"
           loading={isLoading}
           disabled={otp.length !== 6}

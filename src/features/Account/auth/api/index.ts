@@ -6,35 +6,32 @@ import requestBack from '@/utils/ruquestBack'
 import { AxiosResponse } from 'axios'
 
 export async function login(
-    data: { phone_number: string; password?: string },
-    visitor_id: string
+  data: { phone_number: string; password?: string },
+  visitor_id: string
 ): Promise<any> {
-    const res: any = await requestAuth({
-        url: '/auth/user/login/',
-        method: 'post',
-        headers: {
-            'X-Device-Id': visitor_id,
-        },
-        data,
-    })
+  const res: any = await requestAuth({
+    url: '/auth/user/login/',
+    method: 'post',
+    headers: {
+      'X-Device-Id': visitor_id,
+    },
+    data,
+  })
 
-    return res
+  return res
 }
 
-export async function sendTelegramOtp(
-    data: { code: string },
-    visitor_id: string
-): Promise<any> {
-    const res: any = await requestAuth({
-        url: '/auth/user/send-otp/',
-        method: 'post',
-        headers: {
-            'X-Device-Id': visitor_id,
-        },
-        data,
-    })
+export async function sendTelegramOtp(data: { code: string }, visitor_id: string): Promise<any> {
+  const res: any = await requestAuth({
+    url: '/auth/user/verify-telegram-code/',
+    method: 'post',
+    headers: {
+      'X-Device-Id': visitor_id,
+    },
+    data,
+  })
 
-    return res
+  return res
 }
 
 export async function confirmOTP(data: any): Promise<AuthResponse> {

@@ -30,7 +30,7 @@ export default function HeroCarousel() {
         ref={carouselRef}
         dots={true}
         dotPosition="bottom"
-        className="mt-2 overflow-hidden rounded-[24px] bg-white group"
+        className="group mt-2 overflow-hidden rounded-[24px] bg-white"
         autoplay
         autoplaySpeed={5000}
       >
@@ -43,8 +43,8 @@ export default function HeroCarousel() {
               <Link href={href} className="block w-full">
                 <div className="relative overflow-hidden rounded-[24px]">
                   <LazyLoadImage
-                    className="h-[200px] md:h-[350px] w-full object-cover"
-                    src={banner.image.replace('http://', 'https://')}
+                    className="h-[200px] w-full object-cover md:h-[350px]"
+                    src={banner.image}
                     alt={banner.title}
                   />
                   {/* Subtle Gradient Overlay for Premium Look */}
@@ -58,22 +58,21 @@ export default function HeroCarousel() {
 
       {/* Modern Floating Controls - Hidden on very small screens, visible on hover for desktop */}
       {!adsBannersLoading && banners.length > 1 && (
-        <div className="absolute top-1/2 -translate-y-1/2 left-4 right-4 z-10 hidden md:flex items-center justify-between pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="pointer-events-none absolute left-4 right-4 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-between opacity-0 transition-opacity group-hover:opacity-100 md:flex">
           <button
-            className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur shadow-md transition-all hover:bg-white active:scale-90"
+            className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur transition-all hover:bg-white active:scale-90"
             onClick={() => carouselRef.current?.prev()}
           >
-            <ArrowLeftIcon2 className="w-5 h-5 -translate-x-[1px]" />
+            <ArrowLeftIcon2 className="h-5 w-5 -translate-x-[1px]" />
           </button>
           <button
-            className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/90 backdrop-blur shadow-md transition-all hover:bg-white active:scale-90"
+            className="pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur transition-all hover:bg-white active:scale-90"
             onClick={() => carouselRef.current?.next()}
           >
-            <ArrowRightIcon2 className="w-5 h-5 translate-x-[1px]" />
+            <ArrowRightIcon2 className="h-5 w-5 translate-x-[1px]" />
           </button>
         </div>
       )}
     </div>
   )
 }
-

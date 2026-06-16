@@ -7,19 +7,39 @@ import StarIcon from '@/components/icons/star'
 import ProductCard from './ProductCard'
 import { useCategoryScrollStore } from '../store/categoryScrollStore'
 
-
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
 const RiderIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="5.5" cy="17.5" r="2.5" /><circle cx="18.5" cy="17.5" r="2.5" />
-    <path d="M8 17.5h7" /><path d="M15 6h2l2 5" />
-    <path d="M9 6l1.5 5H19" /><path d="M5.5 15l2-6h5" />
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="5.5" cy="17.5" r="2.5" />
+    <circle cx="18.5" cy="17.5" r="2.5" />
+    <path d="M8 17.5h7" />
+    <path d="M15 6h2l2 5" />
+    <path d="M9 6l1.5 5H19" />
+    <path d="M5.5 15l2-6h5" />
   </svg>
 )
 
 const InfoCircleIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
     <circle cx="12" cy="12" r="10" />
     <line x1="12" y1="16" x2="12" y2="12" />
     <line x1="12" y1="8" x2="12.01" y2="8" />
@@ -29,7 +49,7 @@ const InfoCircleIcon = () => (
 // ─── Skeletons ────────────────────────────────────────────────────────────────
 
 const HeroSkeleton = () => (
-  <div className="relative h-[220px] w-full overflow-hidden rounded-[20px] bg-[#E5E7EB] animate-pulse">
+  <div className="relative h-[220px] w-full animate-pulse overflow-hidden rounded-[20px] bg-[#E5E7EB]">
     <div className="absolute bottom-5 left-5 flex flex-col gap-3">
       <div className="h-7 w-32 rounded-[8px] bg-white/30" />
       <div className="flex items-center gap-2">
@@ -42,11 +62,11 @@ const HeroSkeleton = () => (
 )
 
 const ProductGridSkeleton = () => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
     {[1, 2, 3, 4, 5, 6].map((i) => (
       <div
         key={i}
-        className="overflow-hidden rounded-[16px] animate-pulse bg-white"
+        className="animate-pulse overflow-hidden rounded-[16px] bg-white"
         style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
       >
         <div className="aspect-square bg-[#F3F4F6]" />
@@ -140,7 +160,10 @@ const StoreItemDetails = ({
 
   // ─── Restaurant meta ────────────────────────────────────────────────────────
   const restaurant = restaurantData?.data || restaurantData || null
-  const bannerUrl = restaurant?.banner?.replace('http://', 'https://')
+  const bannerUrl =
+    restaurant?.banner && restaurant.banner !== 'undefined'
+      ? restaurant.banner.replace('http://', 'https://')
+      : null
   const name = restaurant?.name || ''
   const deliveryTime = restaurant?.delivery_time || '15–25'
   const rating = restaurant?.rating
@@ -186,9 +209,7 @@ const StoreItemDetails = ({
           }}
           aria-label="Sevimlilar"
         >
-          <HeartIcon
-            style={{ fontSize: 18, color: liked ? '#FF4B6E' : 'rgba(255,255,255,0.9)' }}
-          />
+          <HeartIcon style={{ fontSize: 18, color: liked ? '#FF4B6E' : 'rgba(255,255,255,0.9)' }} />
         </button>
 
         {/* Bottom info */}
@@ -259,7 +280,7 @@ const StoreItemDetails = ({
             <span className="font-semibold text-[#0c0c0c]">Do'kon haqida</span>
             <button
               onClick={() => setInfoOpen(false)}
-              className="text-[#9CA3AF] hover:text-[#0c0c0c] transition-colors"
+              className="text-[#9CA3AF] transition-colors hover:text-[#0c0c0c]"
             >
               ✕
             </button>
@@ -282,9 +303,9 @@ const StoreItemDetails = ({
             return (
               <div key={cat.id} id={`category-section-${cat.id}`}>
                 <div className="mb-3 flex items-center gap-2">
-                  {cat.category_details?.logo && (
+                  {cat.category_details?.logo && cat.category_details.logo !== 'undefined' && (
                     <img
-                      src={cat.category_details.logo}
+                      src={cat.category_details.logo.replace('http://', 'https://')}
                       alt={cat.category_details.name}
                       className="h-6 w-6 rounded-full object-cover"
                     />
@@ -297,18 +318,18 @@ const StoreItemDetails = ({
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {activeProducts.map((product: any) => (
-                    <ProductCard 
-                      key={product.id} 
-                      product={product} 
+                    <ProductCard
+                      key={product.id}
+                      product={product}
                       restaurantInfo={{
-                         id: restaurant?.uuid || slug as string,
-                         name: name,
-                         slug: slug as string,
-                         image: bannerUrl || '',
-                         deliveryTime: deliveryTime,
-                         rating: rating,
+                        id: restaurant?.uuid || (slug as string),
+                        name: name,
+                        slug: slug as string,
+                        image: bannerUrl || '',
+                        deliveryTime: deliveryTime,
+                        rating: rating,
                       }}
                     />
                   ))}
