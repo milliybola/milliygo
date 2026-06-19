@@ -2,6 +2,7 @@ import HeroCarousel from '@/features/Main/containers/ContentInstagram/post-carou
 import RestaurantsList from '@/features/Main/containers/RestaurantsList'
 import StoreList from '@/features/Main/containers/StoreList'
 import QuickCategories from '@/features/Main/components/QuickCategories'
+import ServicesSelector from '@/features/Main/components/ServicesSelector'
 import { SearchOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/router'
 import Image from 'next/image'
@@ -72,15 +73,24 @@ export default function Home() {
           <QuickCategories />
         </div>
 
-        <section className="mt-14">
+        <section id="stores-section" className="mt-14 scroll-mt-24">
           {/* <h2 className="section-title px-4 md:px-0">Do'konlar</h2> */}
           <StoreList />
         </section>
 
-        <section className="mt-14">
+        <section id="restaurants-section" className="mt-14 scroll-mt-24">
           {/* <h2 className="section-title px-4 md:px-0">Restoranlar</h2> */}
           <RestaurantsList />
         </section>
+
+        {/* Tez kunda Section */}
+        <div className="mt-16 border-t border-gray-100 pt-10">
+          <h2 className="section-title px-4 md:px-0">Tez kunda</h2>
+          <p className="section-subtitle -mt-2 mb-6 px-4 md:px-0">
+            Yaqin orada qo'shilishi kutilayotgan yangi xizmatlarimiz
+          </p>
+          <ServicesSelector />
+        </div>
       </div>
 
       {/* Spacing for bottom nav */}
