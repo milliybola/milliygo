@@ -49,10 +49,10 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
             last_name: tgUser.last_name || '',
             username: tgUser.username || '',
             init_data: initData,
-            auth_date: Math.floor(Date.now() / 1000)
+            auth_date: Math.floor(Date.now() / 1000),
           })
 
-          addLog("Muvaffaqiyatli kirildi!")
+          addLog('Muvaffaqiyatli kirildi!')
         } catch (err: any) {
           addLog(`KIRISHDA XATO: ${err.message}`)
         } finally {
@@ -79,30 +79,28 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
         img: 'visibility',
         color: '#ffffff',
         backgroundColor: 'rgba(255, 255, 255, 0.33)',
-      }
+      },
     })
     return () => accessibility?.destroy?.()
   }, [t])
 
   const noLayoutPages = ['login', 'get-token-my-id', 'register-guide', 'register-contractor']
-  const shouldShowLayout = !noLayoutPages.some(page => pathname.includes(page))
+  const shouldShowLayout = !noLayoutPages.some((page) => pathname.includes(page))
 
   if (!shouldShowLayout) return <>{children}</>
 
   return (
     <div className={`flex min-h-screen flex-col bg-white ${isMobile ? 'tma-container' : ''}`}>
       {/* Milliy-Classic Top Strip */}
-      <div className="h-1.5 w-full bg-[#0052B4] shadow-sm z-[100]" />
-      
+      <div className="z-[100] h-1.5 w-full bg-[#0052B4] shadow-sm" />
+
       {!isMobile && <CHeader />}
 
       <main className={`flex-grow ${isMobile ? 'pb-24' : 'bg-white'}`}>
-        <div className="relative">
-          {children}
-        </div>
+        <div className="relative">{children}</div>
       </main>
 
-      {!isMobile && <CFooter />}
+      <CFooter />
       {isMobile && <BottomNavigation />}
     </div>
   )
