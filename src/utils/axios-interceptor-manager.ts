@@ -16,10 +16,12 @@ let refreshTokenPromise: Promise<string> | null = null
 class CustomError extends Error {
   code: string
   status: number
-  constructor(message: string, code: string, status: number) {
+  response?: any
+  constructor(message: string, code: string, status: number, response?: any) {
     super(message)
     this.code = code
     this.status = status
+    this.response = response
   }
 }
 
@@ -116,11 +118,32 @@ export const globalOnResponseRejected: (_error: AxiosError) => Promise<any> = as
   const errorData = error.response?.data as any
 
   if (errorData) {
-    const errorMsg =
+    let errorMsg =
       errorData.detail ||
       errorData.message ||
-      (Array.isArray(errorData) ? errorData[0]?.detail : null) ||
-      'Something went wrong'
+      (Array.isArray(errorData) ? errorData[0]?.detail : null)
+
+    if (!errorMsg && errorData && typeof errorData === 'object' && !Array.isArray(errorData)) {
+      const messagesList: string[] = []
+      Object.entries(errorData).forEach(([_, value]) => {
+        if (typeof value === 'string') {
+          messagesList.push(value)
+        } else if (Array.isArray(value)) {
+          value.forEach((v) => {
+            if (typeof v === 'string') {
+              messagesList.push(v)
+            }
+          })
+        }
+      })
+      if (messagesList.length > 0) {
+        errorMsg = messagesList.join(' ')
+      }
+    }
+
+    if (!errorMsg) {
+      errorMsg = 'Something went wrong'
+    }
 
     if (Array.isArray(errorData)) {
       errorData.forEach((val) => {
@@ -140,11 +163,15 @@ export const globalOnResponseRejected: (_error: AxiosError) => Promise<any> = as
       })
     }
 
-    return Promise.reject(new CustomError(errorMsg, error.code || '', error.response?.status || 0))
+    return Promise.reject(
+      new CustomError(errorMsg, error.code || '', error.response?.status || 0, error.response)
+    )
   }
 
   const networkErrorMsg = error.message || 'Tarmoqda nosozlik (Network Error)'
-  return Promise.reject(new CustomError(networkErrorMsg, error.code || 'NETWORK_ERROR', 0))
+  return Promise.reject(
+    new CustomError(networkErrorMsg, error.code || 'NETWORK_ERROR', 0, error.response)
+  )
 }
 
 export const globalOnRequestFulfilled: (
