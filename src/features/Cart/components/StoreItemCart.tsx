@@ -83,7 +83,7 @@ const StoreItemCart = ({
     enabled: !!querySlug,
   })
 
-  const partnerData = categoriesData?.data
+  const partnerData = categoriesData?.data as any
   const deliveryFee =
     partnerData?.delivery_fee !== undefined ? Number(partnerData.delivery_fee) : 8000
   const freeDeliveryThreshold =
