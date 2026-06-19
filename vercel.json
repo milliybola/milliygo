@@ -1,0 +1,14 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": true,
+  "rewrites": [
+    {
+      "source": "/((?!_next|static|favicon.ico|robots.txt|assets|.*\\..*).*)/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/((?!_next|static|favicon.ico|robots.txt|assets|.*\\..*).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
