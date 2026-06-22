@@ -48,7 +48,7 @@ export async function rateCourier(
   data: { score: number; comment: string }
 ): Promise<any> {
   const res = await request({
-    url: `/api/orders/${orderUuid}/rate-courier/`,
+    url: `/orders/${orderUuid}/rate-courier/`,
     method: 'post',
     data,
   })
