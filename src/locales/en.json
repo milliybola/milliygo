@@ -1403,7 +1403,7 @@
     "confirm-pass-error": "Please confirm your password!",
     "confirm-pass-error-2": "Your new password is not the same!",
     "save-changes": "Save changes",
-    "login-terms": "By logging into an account or creating a new one, you agree to our <link1>Terms and Conditions</link1> and <link2>Terms and Conditions</link2>",
+    "login-terms": "By logging into an account or creating a new one, you agree to our <link1>Terms and Conditions</link1> and <link2>Privacy Policy</link2>",
     "confirm-email": "Email confirmation",
     "send-otp-email": "A confirmation code has been sent to {email}",
     "resend-otp": "Resend code",

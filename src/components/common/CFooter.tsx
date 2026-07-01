@@ -129,7 +129,7 @@ const CFooter = () => {
                   </div>
                 </a> */}
                 <a
-                  href="#"
+                  href="https://play.google.com/store/apps/details?id=uz.milliyapp.milliygo"
                   className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-700 shadow-sm transition-colors hover:bg-gray-100"
                 >
                   <svg
@@ -160,9 +160,7 @@ const CFooter = () => {
                     <span className="text-[9px] font-semibold uppercase opacity-70">
                       Google Play
                     </span>
-                    <span className="text-[14px] font-bold leading-none">
-                      Yuklab olish (Tez kunda)
-                    </span>
+                    <span className="text-[14px] font-bold leading-none">Yuklab olish</span>
                   </div>
                 </a>
               </div>

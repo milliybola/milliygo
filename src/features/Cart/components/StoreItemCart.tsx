@@ -1,4 +1,5 @@
 import { useRouter } from 'next/router'
+import Link from 'next/link'
 import { useCartStore } from '@/store/cartStore'
 import { useContext, useState, useMemo } from 'react'
 import { AuthContext } from '@/features/Account/auth/context/authContext'
@@ -301,6 +302,25 @@ const StoreItemCart = ({
                 ? 'Buyurtma berish'
                 : `Eng kam buyurtma: ${fmt(minOrderAmount)} UZS`}
           </button>
+          <p className="mt-3 px-2 text-center text-[12px] leading-normal text-gray-400">
+            Buyurtma berish orqali siz{' '}
+            <Link
+              href="/terms-of-use"
+              target="_blank"
+              className="font-semibold text-[#008080] hover:underline"
+            >
+              Foydalanish shartlari
+            </Link>{' '}
+            va{' '}
+            <Link
+              href="/privacy"
+              target="_blank"
+              className="font-semibold text-[#008080] hover:underline"
+            >
+              Maxfiylik siyosati
+            </Link>
+            ga rozilik bildirasiz.
+          </p>
         </div>
       </div>
 

@@ -7,19 +7,19 @@ function AgreeWithTerms(): React.ReactElement {
   const t = useTranslations()
 
   return (
-    <div className=" mb-3">
+    <div className="mb-3">
       <Typography className="text-center">
-        <Typography.Text className="text-primary-dark !text-sm">
+        <Typography.Text className="!text-sm text-primary-dark">
           {t.rich('auth.login-terms', {
             link1: (chunks) => (
-              <Link href="/support/pravila-i-usloviia/" aria-label={`open support route`}>
+              <Link href="/terms-of-use" aria-label={`open support route`}>
                 <Typography.Text className="!text-sm text-primary" underline>
                   {chunks}
                 </Typography.Text>
               </Link>
             ),
             link2: (chunks) => (
-              <Link href="/support/iuridicheskaia-informats/" aria-label={`open pravila2 route`}>
+              <Link href="/privacy" aria-label={`open pravila2 route`}>
                 <Typography.Text className="!text-sm text-primary" underline>
                   {chunks}
                 </Typography.Text>

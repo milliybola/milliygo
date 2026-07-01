@@ -1,6 +1,7 @@
 import { Typography, Input, Modal, Select, Button, message } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { useState, useContext, useMemo } from 'react'
+import Link from 'next/link'
 
 import { useTranslations } from 'next-intl'
 import { getRestaurantDetail, createOrder, getStoreItemCategories } from './api'
@@ -411,6 +412,25 @@ const CartFullPage = () => {
             >
               BEKOR QILISH
             </button>
+            <p className="mt-2 px-2 text-center text-[12px] leading-normal text-gray-400">
+              Tasdiqlash orqali siz{' '}
+              <Link
+                href="/terms-of-use"
+                target="_blank"
+                className="font-semibold text-[#008080] hover:underline"
+              >
+                Foydalanish shartlari
+              </Link>{' '}
+              va{' '}
+              <Link
+                href="/privacy"
+                target="_blank"
+                className="font-semibold text-[#008080] hover:underline"
+              >
+                Maxfiylik siyosati
+              </Link>
+              ga rozilik bildirasiz.
+            </p>
           </div>
         </div>
       </Modal>
