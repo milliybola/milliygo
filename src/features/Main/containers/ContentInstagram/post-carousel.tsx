@@ -18,7 +18,7 @@ export default function HeroCarousel() {
   const t = useTranslations()
 
   const { data: adsBanners, isLoading: adsBannersLoading } = useQuery({
-    queryKey: ['ads-banners'],
+    queryKey: ['posts'],
     queryFn: getAdsBanner,
   })
 

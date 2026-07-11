@@ -1,5 +1,6 @@
 import React from 'react'
 import { message } from 'antd'
+import { useRouter } from 'next/router'
 
 interface IComingSoonItem {
   id: string
@@ -10,7 +11,19 @@ interface IComingSoonItem {
 }
 
 const ServicesSelector = () => {
+  const router = useRouter()
+  const isDev = process.env.NODE_ENV === 'development'
+
   const handleServiceClick = (item: IComingSoonItem) => {
+    if (isDev && item.id === 'services') {
+      router.push('/services/')
+      return
+    }
+    if (isDev && item.id === 'jobs') {
+      router.push('/jobs/')
+      return
+    }
+
     message.info({
       content: `"${item.name}" xizmati tez kunda ishga tushiriladi!`,
       icon: <span className="text-lg">🚀</span>,

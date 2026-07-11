@@ -21,21 +21,29 @@ import {
 } from '../types'
 import requestTour from '@/utils/tourRequest'
 
-export async function getBaseCategories({partner_type}: {partner_type: string}): Promise<ICategoryResponse> {
+export async function getBaseCategories({
+  partner_type,
+}: {
+  partner_type: string
+}): Promise<ICategoryResponse> {
   const res: ICategoryResponse = await request({
     url: '/base-categories/',
     method: 'get',
-    params: { partner_type }
+    params: { partner_type },
   })
 
   return res
 }
 
-export async function getRestaurantsList({ partner_type }: { partner_type: string }): Promise<IPartnerResponse> {
+export async function getRestaurantsList({
+  partner_type,
+}: {
+  partner_type: string
+}): Promise<IPartnerResponse> {
   const res: IPartnerResponse = await request({
     url: '/partner/',
     method: 'get',
-    params: { partner_type }
+    params: { partner_type },
   })
 
   return res
@@ -43,7 +51,7 @@ export async function getRestaurantsList({ partner_type }: { partner_type: strin
 
 export async function getAdsBanner(): Promise<IAdsBannerResponse> {
   const res: IAdsBannerResponse = await request({
-    url: '/advertising/banners/',
+    url: '/promotions/promos/',
     method: 'get',
   })
 
