@@ -17,6 +17,7 @@ const CFooter = () => {
         <div className="milliy-ikat-strip absolute left-0 top-0 z-20 h-[6px] w-full" />
 
         {/* Subtle background decoration */}
+        <div className="milliy-girih-blueprint pointer-events-none absolute inset-0 opacity-60" />
         <div className="milliy-pattern-bg absolute right-0 top-0 h-64 w-64 -translate-y-1/2 translate-x-1/2 rounded-full opacity-[0.08]" />
 
         <div className="container relative z-10">
@@ -237,7 +238,7 @@ const CFooter = () => {
           </div>
 
           {/* Bottom Bar */}
-          <div className="flex flex-col items-center justify-between gap-4 border-t border-gray-100 pt-6 md:flex-row">
+          <div className="flex flex-col items-center justify-between gap-4 border-t border-[#C5A059]/15 pt-6 md:flex-row">
             <div className="text-center text-[11px] text-gray-400 md:text-[13px] md:text-gray-500">
               © 2026 MilliyGo. Barcha huquqlar himoyalangan.
             </div>

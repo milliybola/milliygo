@@ -289,7 +289,7 @@ const CHeader = () => {
                   height={34}
                   src={logo}
                   alt="MilliyGo"
-                  className="rounded-lg object-contain shadow-sm"
+                  className="rounded-lg object-contain shadow-sm ring-1 ring-[#C5A059]/25"
                 />
                 <Typography.Text className="pacifico-regular text-[22px] font-bold text-[#111]">
                   MilliyGo
@@ -573,8 +573,8 @@ const CHeader = () => {
             </div>
           )}
         </div>
-        {/* Colorful Ikat Strip */}
-        {/* <div className="w-full h-[6px] milliy-ikat-strip" /> */}
+        {/* Colorful Ikat Strip — signature Milliy accent under the navbar */}
+        <div className="milliy-ikat-strip h-[4px] w-full" />
       </div>
 
       <LocationModal open={isLocationModalOpen} onClose={() => setIsLocationModalOpen(false)} />

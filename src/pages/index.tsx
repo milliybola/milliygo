@@ -3,7 +3,7 @@ import RestaurantsList from '@/features/Main/containers/RestaurantsList'
 import StoreList from '@/features/Main/containers/StoreList'
 import QuickCategories from '@/features/Main/components/QuickCategories'
 import ServicesSelector from '@/features/Main/components/ServicesSelector'
-import { SearchOutlined, StarFilled } from '@ant-design/icons'
+import { SearchOutlined, StarFilled, ThunderboltFilled, ShopFilled } from '@ant-design/icons'
 import { useRouter } from 'next/router'
 import Image from 'next/image'
 import logo from '/public/logo.png'
@@ -167,7 +167,13 @@ export default function Home() {
     <main className="milliy-ikat-pattern relative flex min-h-screen flex-col bg-[#F9FAFB]">
       <div className="sticky top-0 z-40 flex items-center gap-3 border-b border-[#efefed] bg-white/90 px-4 py-3 backdrop-blur-md md:hidden">
         <div className="flex-shrink-0" onClick={() => router.push('/')}>
-          <Image src={logo} alt="MilliyGo" width={40} height={40} className="object-contain" />
+          <Image
+            src={logo}
+            alt="MilliyGo"
+            width={40}
+            height={40}
+            className="rounded-xl object-contain ring-1 ring-[#C5A059]/25"
+          />
         </div>
 
         <div
@@ -181,22 +187,65 @@ export default function Home() {
         </div>
       </div>
       {/* Milliy-Classic Header Section */}
-      <div className="relative overflow-hidden rounded-b-[36px] border-b border-[#C5A059]/20 bg-gradient-to-br from-[#FAF9F6] via-[#FDFBF7] to-[#FAF9F6] px-4 pb-8 pt-8 shadow-[0_15px_35px_rgba(197,160,89,0.06)] md:px-[80px] xl:px-[160px]">
+      <div className="relative overflow-hidden rounded-b-[36px] border-b border-[#C5A059]/20 bg-gradient-to-br from-[#FAF9F6] via-[#FDFBF7] to-[#FAF9F6] px-4 pb-7 pt-8 shadow-[0_15px_35px_rgba(197,160,89,0.06)] md:px-[80px] xl:px-[160px]">
+        {/* Girih blueprint texture */}
+        <div className="milliy-girih-blueprint pointer-events-none absolute inset-0 opacity-70" />
+
         <div className="relative z-10 flex flex-col items-center justify-between gap-8 lg:flex-row">
           {/* Left Text Column */}
           <div className="flex max-w-xl flex-1 flex-col gap-3 text-left">
-            {/* <span className="text-[#B38F4D] font-extrabold text-[10px] uppercase tracking-[0.25em] bg-[#C5A059]/10 border border-[#C5A059]/25 w-fit px-3 py-1 rounded-full select-none shadow-[inset_0_1px_8px_rgba(197,160,89,0.05)] flex items-center gap-1.5">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#C5A059] animate-ping" />
-              O'ZIMIZNIKI
-            </span> */}
+            <span className="flex w-fit select-none items-center gap-1.5 rounded-full border border-[#C5A059]/25 bg-[#C5A059]/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#B38F4D] shadow-[inset_0_1px_8px_rgba(197,160,89,0.05)]">
+              <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-[#C5A059]" />
+              O&#39;zimizniki
+            </span>
             <h1 className="!m-0 text-2xl font-black leading-[1.2] tracking-tight text-gray-900 md:text-3xl lg:text-[36px]">
               Assalomu alaykum! Xo'jayin👋
             </h1>
             <p className="!m-0 text-[14.5px] font-semibold leading-relaxed text-gray-600 md:text-base">
               G'allaorolda restoran, kafe va do'konlardan tezkor yetkazib beramiz.
             </p>
+
+            {/* Trust stats row */}
+            <div className="mt-2 flex items-center gap-4 sm:gap-6">
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#C5A059]/10">
+                  <ThunderboltFilled className="text-[13px] text-[#C5A059]" />
+                </span>
+                <div className="leading-tight">
+                  <div className="text-[13px] font-black text-gray-900">30 daqiqa</div>
+                  <div className="text-[10.5px] font-medium text-gray-500">tezkor yetkazish</div>
+                </div>
+              </div>
+
+              <div className="h-8 w-px bg-[#C5A059]/15" />
+
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#C5A059]/10">
+                  <StarFilled className="text-[13px] text-[#C5A059]" />
+                </span>
+                <div className="leading-tight">
+                  <div className="text-[13px] font-black text-gray-900">4.9 reyting</div>
+                  <div className="text-[10.5px] font-medium text-gray-500">mijozlar bahosi</div>
+                </div>
+              </div>
+
+              <div className="h-8 w-px bg-[#C5A059]/15" />
+
+              <div className="flex items-center gap-2">
+                <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#C5A059]/10">
+                  <ShopFilled className="text-[13px] text-[#C5A059]" />
+                </span>
+                <div className="leading-tight">
+                  <div className="text-[13px] font-black text-gray-900">50+ hamkor</div>
+                  <div className="text-[10.5px] font-medium text-gray-500">restoran va do'kon</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Signature ikat divider along the hero's bottom edge */}
+        <div className="milliy-ikat-strip absolute bottom-0 left-0 z-10 h-[4px] w-full opacity-90" />
       </div>
 
       {/* Mobile-only Search Bar (Sticky & Elegant) */}
@@ -222,12 +271,15 @@ export default function Home() {
         </section>
 
         {/* Tez kunda Section */}
-        <div className="mt-16 border-t border-gray-100 pt-10">
-          <h2 className="section-title px-4 md:px-0">Tez kunda</h2>
-          <p className="section-subtitle -mt-2 mb-6 px-4 md:px-0">
-            Yaqin orada qo'shilishi kutilayotgan yangi xizmatlarimiz
-          </p>
-          <ServicesSelector />
+        <div className="relative mx-4 mt-16 overflow-hidden rounded-[28px] border border-[#C5A059]/15 bg-gradient-to-br from-white via-[#FDFBF7] to-white px-4 py-8 shadow-[0_4px_24px_rgba(197,160,89,0.05)] md:mx-0 md:px-8">
+          <div className="milliy-girih-blueprint pointer-events-none absolute inset-0 opacity-60" />
+          <div className="relative z-10">
+            <h2 className="section-title">Tez kunda</h2>
+            <p className="section-subtitle -mt-2 mb-6">
+              Yaqin orada qo'shilishi kutilayotgan yangi xizmatlarimiz
+            </p>
+            <ServicesSelector />
+          </div>
         </div>
       </div>
 
