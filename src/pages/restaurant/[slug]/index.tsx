@@ -6,30 +6,30 @@ import { baseURL } from '@/utils/axios'
 
 export async function getStaticPaths() {
   try {
-    const res = await fetch(`${baseURL}/partner/?partner_type=RESTAURANT`).then(v => v.json());
-    const partners = res?.data?.partners || res?.results || [];
-    
+    const res = await fetch(`${baseURL}/partner/?partner_type=RESTAURANT`).then((v) => v.json())
+    const partners = res?.data?.partners || res?.results || []
+
     const paths = partners.map((p: any) => ({
-      params: { slug: p.uuid || p.id.toString() }
-    }));
+      params: { slug: p.uuid || p.id.toString() },
+    }))
 
     return { paths, fallback: false }
   } catch (error) {
-    console.error("Failed to fetch restaurant paths:", error);
+    console.error('Failed to fetch restaurant paths:', error)
     return { paths: [], fallback: false }
   }
 }
 
 export async function getStaticProps(context: any) {
-  let messages = {};
+  let messages = {}
   try {
     if (context && context.locale) {
-        messages = (await import(`../../../locales/${context.locale}.json`)).default;
+      messages = (await import(`../../../locales/${context.locale}.json`)).default
     } else {
-        messages = (await import(`../../../locales/uz.json`)).default;
+      messages = (await import(`../../../locales/uz.json`)).default
     }
   } catch (err) {
-    console.warn("Failed to load locales for", context?.locale);
+    console.warn('Failed to load locales for', context?.locale)
   }
   return { props: { messages } }
 }
@@ -39,11 +39,11 @@ import { useHasHydrated } from '@/hooks/useHasHydrated'
 const StoreItemPage = () => {
   const t = useTranslations()
   const hasHydrated = useHasHydrated()
-  
+
   if (!hasHydrated) return null
 
   return (
-    <main className="bg-white mb-20 px-0">
+    <main className="mb-20 bg-white px-10">
       <RestaurantItem />
     </main>
   )

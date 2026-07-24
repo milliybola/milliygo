@@ -202,7 +202,7 @@ const StoreItemCart = ({
           </div>
 
           {/* Delivery Time Selection */}
-          <div className="group -mx-2 flex items-center gap-4 px-2 py-3 transition-colors">
+          {/* <div className="group -mx-2 flex items-center gap-4 px-2 py-3 transition-colors">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gray-400">
               <ClockCircleOutlined className="text-xl" />
             </div>
@@ -221,7 +221,7 @@ const StoreItemCart = ({
                 ]}
               />
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="mt-4 rounded-[20px] bg-[#F2F4F7] p-4">

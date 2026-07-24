@@ -88,14 +88,14 @@ import { useCartStore } from '@/store/cartStore'
 const StoreItem = () => {
   const t = useTranslations()
   const router = useRouter()
-  const { slug, id } = router.query
+  const { slug } = router.query
 
   const [activeCategory, setActiveCategory] = useState<number | null>(null)
   const [likedIds, setLikedIds] = useState<Set<number>>(new Set())
 
   const { data: restaurantData, isLoading: restaurantLoading } = useQuery({
     queryKey: ['restaurant-detail', slug],
-    queryFn: () => getRestaurantDetail({ uuid: id as string }),
+    queryFn: () => getRestaurantDetail({ uuid: slug as string }),
     enabled: !!slug,
   })
 
@@ -150,7 +150,7 @@ const StoreItem = () => {
         <div className="mb-2 lg:mb-0">
           <Typography.Title
             level={2}
-            className="!m-0 text-[20px] font-bold text-gray-900 lg:text-[32px]"
+            className="!m-0 px-4 text-[20px] font-bold text-gray-900 lg:text-[32px]"
           >
             {restaurantData?.name || 'Restoran'}
           </Typography.Title>

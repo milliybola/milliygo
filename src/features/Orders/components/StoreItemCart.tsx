@@ -222,7 +222,7 @@ const StoreItemCart = ({
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gray-400">
               <ClockCircleOutlined className="text-xl" />
             </div>
-            <div className="min-w-0 flex-1">
+            {/* <div className="min-w-0 flex-1">
               <Text className="mb-0.5 block text-[13px] text-gray-400">Yetkazib berish vaqti</Text>
               <Select
                 value={deliveryTime}
@@ -236,7 +236,7 @@ const StoreItemCart = ({
                   { value: '60 daqiqada', label: '60 daqiqada' },
                 ]}
               />
-            </div>
+            </div> */}
           </div>
         </div>
 
