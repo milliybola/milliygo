@@ -8,8 +8,11 @@ import {
   PhoneOutlined,
   SendOutlined,
 } from '@ant-design/icons'
+import { useApplicationInfo } from '@/features/Application/hooks/useApplicationInfo'
 
 const CFooter = () => {
+  const { info: applicationInfo } = useApplicationInfo()
+
   return (
     <>
       <footer className="relative mt-auto overflow-hidden border-t border-gray-100 bg-white pb-28 pt-8 text-gray-600 shadow-[0_-10px_30px_rgba(0,0,0,0.015)] md:pb-8 md:pt-16">
@@ -41,24 +44,30 @@ const CFooter = () => {
                 G'allaorolda kafe, restoran va do'konlardan tezkor yetkazib berish xizmati.
               </p>
               <div className="flex items-center gap-4">
-                <a
-                  href="https://t.me/milliygo_app"
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-[#24A1DE]/10 text-[#24A1DE] shadow-sm transition-all duration-200 hover:bg-[#24A1DE] hover:text-white"
-                >
-                  <SendOutlined className="text-[16px]" />
-                </a>
-                <a
-                  href="#"
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1877F2]/10 text-[#1877F2] shadow-sm transition-all duration-200 hover:bg-[#1877F2] hover:text-white"
-                >
-                  <FacebookOutlined className="text-[16px]" />
-                </a>
-                <a
-                  href="https://www.instagram.com/milliyapp/"
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E1306C]/10 text-[#E1306C] shadow-sm transition-all duration-200 hover:bg-gradient-to-tr hover:from-[#F9CE34] hover:via-[#EE2A7B] hover:to-[#6228D7] hover:text-white"
-                >
-                  <InstagramOutlined className="text-[16px]" />
-                </a>
+                {applicationInfo.telegram_url && (
+                  <a
+                    href={applicationInfo.telegram_url}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-[#24A1DE]/10 text-[#24A1DE] shadow-sm transition-all duration-200 hover:bg-[#24A1DE] hover:text-white"
+                  >
+                    <SendOutlined className="text-[16px]" />
+                  </a>
+                )}
+                {applicationInfo.facebook_url && (
+                  <a
+                    href={applicationInfo.facebook_url}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1877F2]/10 text-[#1877F2] shadow-sm transition-all duration-200 hover:bg-[#1877F2] hover:text-white"
+                  >
+                    <FacebookOutlined className="text-[16px]" />
+                  </a>
+                )}
+                {applicationInfo.instagram_url && (
+                  <a
+                    href={applicationInfo.instagram_url}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-[#E1306C]/10 text-[#E1306C] shadow-sm transition-all duration-200 hover:bg-gradient-to-tr hover:from-[#F9CE34] hover:via-[#EE2A7B] hover:to-[#6228D7] hover:text-white"
+                  >
+                    <InstagramOutlined className="text-[16px]" />
+                  </a>
+                )}
               </div>
             </div>
 
@@ -130,7 +139,9 @@ const CFooter = () => {
                   </div>
                 </a> */}
                 <a
-                  href="https://play.google.com/store/apps/details?id=uz.milliyapp.milliygo"
+                  href={applicationInfo.android_application_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-700 shadow-sm transition-colors hover:bg-gray-100"
                 >
                   <svg
@@ -216,46 +227,52 @@ const CFooter = () => {
 
             {/* Social media icons */}
             <div className="mt-1 flex items-center gap-4">
-              <a
-                href="https://t.me/milliygo_app"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#24A1DE]/10 text-[#24A1DE] shadow-sm transition-all duration-200 hover:bg-[#24A1DE] hover:text-white"
-              >
-                <SendOutlined className="text-[13px]" />
-              </a>
-              <a
-                href="#"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1877F2]/10 text-[#1877F2] shadow-sm transition-all duration-200 hover:bg-[#1877F2] hover:text-white"
-              >
-                <FacebookOutlined className="text-[13px]" />
-              </a>
-              <a
-                href="https://www.instagram.com/milliyapp/"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E1306C]/10 text-[#E1306C] shadow-sm transition-all duration-200 hover:bg-gradient-to-tr hover:from-[#F9CE34] hover:via-[#EE2A7B] hover:to-[#6228D7] hover:text-white"
-              >
-                <InstagramOutlined className="text-[13px]" />
-              </a>
+              {applicationInfo.telegram_url && (
+                <a
+                  href={applicationInfo.telegram_url}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[#24A1DE]/10 text-[#24A1DE] shadow-sm transition-all duration-200 hover:bg-[#24A1DE] hover:text-white"
+                >
+                  <SendOutlined className="text-[13px]" />
+                </a>
+              )}
+              {applicationInfo.facebook_url && (
+                <a
+                  href={applicationInfo.facebook_url}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1877F2]/10 text-[#1877F2] shadow-sm transition-all duration-200 hover:bg-[#1877F2] hover:text-white"
+                >
+                  <FacebookOutlined className="text-[13px]" />
+                </a>
+              )}
+              {applicationInfo.instagram_url && (
+                <a
+                  href={applicationInfo.instagram_url}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-[#E1306C]/10 text-[#E1306C] shadow-sm transition-all duration-200 hover:bg-gradient-to-tr hover:from-[#F9CE34] hover:via-[#EE2A7B] hover:to-[#6228D7] hover:text-white"
+                >
+                  <InstagramOutlined className="text-[13px]" />
+                </a>
+              )}
             </div>
           </div>
 
           {/* Bottom Bar */}
           <div className="flex flex-col items-center justify-between gap-4 border-t border-[#C5A059]/15 pt-6 md:flex-row">
             <div className="text-center text-[11px] text-gray-400 md:text-[13px] md:text-gray-500">
-              © 2026 MilliyGo. Barcha huquqlar himoyalangan.
+              © {new Date().getFullYear()} {applicationInfo.name}. Barcha huquqlar himoyalangan.
             </div>
             <div className="flex flex-col items-center gap-3 text-[12px] sm:flex-row sm:gap-8 md:text-[13px]">
               <a
-                href="tel:+998904969007"
+                href={`tel:${applicationInfo.phone_number}`}
                 className="flex items-center gap-2 text-gray-500 transition-colors hover:text-[#C5A059]"
               >
                 <PhoneOutlined className="text-gray-400" />
-                +998 90 496 90 07
+                {applicationInfo.phone_number}
               </a>
               <a
-                href="mailto:info@milliyapp.uz"
+                href={`mailto:${applicationInfo.email}`}
                 className="flex items-center gap-2 text-gray-500 transition-colors hover:text-[#C5A059]"
               >
                 <MailOutlined className="text-gray-400" />
-                info@milliyapp.uz
+                {applicationInfo.email}
               </a>
             </div>
           </div>

@@ -54,6 +54,7 @@ import telegram from '/public/telegram.png'
 import facebook from '/public/facebook.png'
 import instagram from '/public/instagram.png'
 import { LocationService } from '@/services/location-service'
+import { useApplicationInfo } from '@/features/Application/hooks/useApplicationInfo'
 
 dayjs.extend(relativeTime)
 dayjs.extend(customParseFormat)
@@ -138,6 +139,7 @@ const CHeader = () => {
 
   const { location, setLocation, setIsInServiceArea } = useLocationStore()
   const ymaps = useYMaps(['geocode'])
+  const { info: applicationInfo } = useApplicationInfo()
 
   useEffect(() => {
     setIsSignedIn(isAuthenticated)
@@ -214,46 +216,50 @@ const CHeader = () => {
             <div className="flex items-center gap-6">
               <div className="flex h-[38px] select-none items-center gap-2 text-[13px] font-bold text-[#C5A059]">
                 <FireOutlined style={{ fontSize: 14 }} />
-                30 daqiqada yetkazib beramiz
+                {applicationInfo?.delivery_time} daqiqada yetkazib beramiz
               </div>
               <div className="h-3 w-px bg-[#E5E7EB]" />
               <a
-                href="tel:+998904969007"
+                href={`tel:${applicationInfo.phone_number}`}
                 className="flex items-center gap-2 text-[13px] text-gray-600 transition-all duration-200 hover:text-[#C5A059]"
               >
                 <PhoneOutlined style={{ fontSize: 14 }} />
-                +998 90 496 90 07
+                {applicationInfo.phone_number}
               </a>
               <a
-                href="mailto:info@milliyapp.uz"
+                href={`mailto:${applicationInfo.email}`}
                 className="flex items-center gap-2 text-[13px] text-gray-600 transition-all duration-200 hover:text-[#C5A059]"
               >
                 <MailOutlined style={{ fontSize: 14 }} />
-                info@milliyapp.uz
+                {applicationInfo.email}
               </a>
             </div>
 
             {/* Right */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3.5">
-                <a href="https://t.me/milliygo_app" aria-label="Telegram" className="">
-                  <Image
-                    src={telegram}
-                    alt="Telegram"
-                    width={18}
-                    height={18}
-                    className="object-contain"
-                  />
-                </a>
-                <a href="https://www.instagram.com/milliyapp/" aria-label="Instagram" className="">
-                  <Image
-                    src={instagram}
-                    alt="Instagram"
-                    width={18}
-                    height={18}
-                    className="object-contain"
-                  />
-                </a>
+                {applicationInfo.telegram_url && (
+                  <a href={applicationInfo.telegram_url} aria-label="Telegram" className="">
+                    <Image
+                      src={telegram}
+                      alt="Telegram"
+                      width={18}
+                      height={18}
+                      className="object-contain"
+                    />
+                  </a>
+                )}
+                {applicationInfo.instagram_url && (
+                  <a href={applicationInfo.instagram_url} aria-label="Instagram" className="">
+                    <Image
+                      src={instagram}
+                      alt="Instagram"
+                      width={18}
+                      height={18}
+                      className="object-contain"
+                    />
+                  </a>
+                )}
               </div>
               <div className="h-3 w-px bg-[#E5E7EB]" />
               <button className="group flex items-center gap-2 text-gray-600 transition-all duration-200 hover:text-[#C5A059]">

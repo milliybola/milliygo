@@ -193,11 +193,11 @@ export default function Home() {
 
         <div className="relative z-10 flex flex-col items-center justify-between gap-8 lg:flex-row">
           {/* Left Text Column */}
-          <div className="flex max-w-xl flex-1 flex-col gap-3 text-left">
-            <span className="flex w-fit select-none items-center gap-1.5 rounded-full border border-[#C5A059]/25 bg-[#C5A059]/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#B38F4D] shadow-[inset_0_1px_8px_rgba(197,160,89,0.05)]">
-              <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-[#C5A059]" />
+          <div className="flex max-w-xl flex-1 flex-col text-left">
+            {/* <span className="flex w-fit select-none items-center gap-1.5 rounded-full border border-[#C5A059]/25 bg-[#C5A059]/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#B38F4D] shadow-[inset_0_1px_8px_rgba(197,160,89,0.05)]"> */}
+            {/* <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-[#C5A059]" />
               O&#39;zimizniki
-            </span>
+            </span> */}
             <h1 className="!m-0 text-2xl font-black leading-[1.2] tracking-tight text-gray-900 md:text-3xl lg:text-[36px]">
               Assalomu alaykum! Xo'jayin👋
             </h1>
@@ -206,7 +206,7 @@ export default function Home() {
             </p>
 
             {/* Trust stats row */}
-            <div className="mt-2 flex items-center gap-4 sm:gap-6">
+            {/* <div className="mt-2 flex items-center gap-4 sm:gap-6">
               <div className="flex items-center gap-2">
                 <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#C5A059]/10">
                   <ThunderboltFilled className="text-[13px] text-[#C5A059]" />
@@ -240,7 +240,7 @@ export default function Home() {
                   <div className="text-[10.5px] font-medium text-gray-500">restoran va do'kon</div>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
 
