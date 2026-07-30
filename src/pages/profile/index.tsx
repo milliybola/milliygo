@@ -140,18 +140,6 @@ const ProfilePage = () => {
           </div>
 
           <div className="space-y-1">
-            <div className="flex items-center gap-4 px-4 py-3 transition-colors active:bg-gray-50">
-              <div className="bg-blue-50 text-blue-500 flex h-10 w-10 items-center justify-center rounded-xl">
-                <MailOutlined className="text-lg" />
-              </div>
-              <div className="flex flex-1 flex-col">
-                <span className="text-[12px] text-gray-400">Elektron pochta</span>
-                <span className="text-[14px] font-bold text-gray-900">
-                  {user?.email || 'Biriktirilmagan'}
-                </span>
-              </div>
-            </div>
-
             {tgUser && (
               <div className="flex items-center gap-4 px-4 py-3 transition-colors active:bg-gray-50">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-500">

@@ -1,4 +1,4 @@
-import { Flex, Typography, Carousel, Button } from 'antd'
+import { Flex, Typography, Carousel, Button, message } from 'antd'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { useRef } from 'react'
@@ -191,225 +191,287 @@ function StoreList() {
         </Link>
       </div>
 
-      {/* Mobile Horizontal Scroll vs Desktop Grid */}
-      <div className="md:hidden">
-        <div className="hide-scrollbar flex gap-4 overflow-x-auto px-4 pb-4">
-          {restaurants.map((val: any, i: number) => {
-            const secureImage = val?.banner?.replace('http://', 'https://')
-            const status = getStoreStatus(val)
-
-            return (
-              <Link
-                key={'store-mobile-' + i}
-                href={`/store/${val?.uuid}?id=${val?.id}`}
-                className="flex w-[240px] shrink-0 flex-col gap-3"
-              >
-                <div className="premium-card relative h-[160px] w-full overflow-hidden">
-                  {secureImage ? (
-                    <img
-                      src={secureImage}
-                      alt={val?.name}
-                      className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-                        !status.isOpen ? 'contrast-[85%] grayscale-[50%]' : ''
-                      }`}
-                    />
-                  ) : (
-                    <div className="h-full w-full bg-gradient-to-br from-gray-100 to-gray-200" />
-                  )}
-
-                  {/* Closed overlay */}
-                  {!status.isOpen && (
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[1.5px]">
-                      <span className="rounded-full bg-[#EF4444] px-3 py-1 text-[12px] font-extrabold uppercase tracking-wider text-white shadow-lg">
-                        Hozir yopiq
-                      </span>
-                      {status.timeRange && (
-                        <span className="mt-1 text-[10px] font-medium text-white/90">
-                          Ish vaqti: {status.timeRange}
-                        </span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Delivery & Rating badge on image */}
-                  <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1 shadow-sm backdrop-blur-sm">
-                    <LightningIcon />
-                    <span className="text-[11px] font-bold text-[#333]">
-                      {val?.delivery_time || '20 min'}
-                    </span>
-                    {val?.rating && (
-                      <>
-                        <span className="h-3 w-px bg-gray-300" />
-                        <StarIcon style={{ fontSize: 10, color: '#F59E0B' }} />
-                        <span className="text-[11px] font-extrabold text-[#333]">{val.rating}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1 px-1">
-                  <span className="line-clamp-1 text-[15px] font-extrabold text-[#0c0c0c]">
-                    {val?.name}
-                  </span>
-
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {status.timeRange && (
-                      <span className="flex items-center gap-0.5 text-[12px] text-[#6B7280]">
-                        <ClockIcon />
-                        {status.timeRange}
-                      </span>
-                    )}
-                    {!status.isOpen && (
-                      <span className="text-[12px] font-bold text-[#EF4444]">
-                        {status.label || 'Yopiq'}
-                      </span>
-                    )}
-                  </div>
-
-                  {(val?.discount || val?.free_delivery) && (
-                    <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                      {val?.discount && (
-                        <span className="rounded-[6px] bg-[#DCFCE7] px-2 py-0.5 text-[10px] font-bold text-[#15803D]">
-                          {val.discount}
-                        </span>
-                      )}
-                      {val?.free_delivery && (
-                        <span className="flex items-center gap-1 rounded-full bg-[#F3E8FF] px-2 py-0.5 text-[10px] font-bold text-[#7C3AED]">
-                          <FreeDeliveryIcon />
-                          Bepul
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </Link>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Carousel for Desktop */}
-      <div className="hidden px-4 md:block md:px-0">
-        {!isLoading && chunkedRestaurants.length > 0 && (
-          <div className="group relative">
-            <Carousel ref={carouselRef} dots={false} infinite={false}>
-              {chunkedRestaurants.map((group, slideIndex) => (
-                <div key={slideIndex}>
-                  <div className="grid grid-cols-4 gap-6">
-                    {group.map((val: any, i: number) => {
-                      const secureImage = val?.banner?.replace('http://', 'https://')
-                      const status = getStoreStatus(val)
-
-                      return (
-                        <Link
-                          key={'store-desktop-' + slideIndex + '-' + i}
-                          href={`/store/${val?.uuid}?id=${val?.id}`}
-                          className="group flex flex-col gap-3"
-                        >
-                          <div className="premium-card group relative h-[200px] w-full overflow-hidden">
-                            {secureImage ? (
-                              <img
-                                src={secureImage}
-                                alt={val?.name}
-                                className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-                                  !status.isOpen ? 'contrast-[85%] grayscale-[50%]' : ''
-                                }`}
-                              />
-                            ) : (
-                              <div className="h-full w-full bg-gray-100" />
-                            )}
-
-                            {/* Closed overlay */}
-                            {!status.isOpen && (
-                              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[1.5px]">
-                                <span className="rounded-full bg-[#EF4444] px-3.5 py-1.5 text-[13px] font-extrabold uppercase tracking-wider text-white shadow-lg">
-                                  Hozir yopiq
-                                </span>
-                                {status.timeRange && (
-                                  <span className="mt-1 text-[11px] font-medium text-white/90">
-                                    Ish vaqti: {status.timeRange}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex flex-col gap-0.5 px-1">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="line-clamp-1 text-[16px] font-bold text-[#0c0c0c] transition-colors hover:text-[#00D166]">
-                                {val?.name}
-                              </span>
-                              {val?.rating && (
-                                <span className="flex shrink-0 items-center gap-1 text-[13px] font-bold text-[#0c0c0c]">
-                                  <StarIcon style={{ color: '#F59E0B' }} />
-                                  {val.rating}
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <LightningIcon />
-                              <span className="text-[13px] text-[#6B7280]">
-                                {val?.delivery_time || '15–30 daqiqa'}
-                              </span>
-                              {status.timeRange && (
-                                <>
-                                  <span className="text-[#D1D5DB]">•</span>
-                                  <span className="flex items-center gap-0.5 text-[12px] text-[#6B7280]">
-                                    <ClockIcon />
-                                    {status.timeRange}
-                                  </span>
-                                </>
-                              )}
-                              {!status.isOpen && (
-                                <>
-                                  <span className="text-[#D1D5DB]">•</span>
-                                  <span className="text-[12px] font-bold text-[#EF4444]">
-                                    {status.label || 'Yopiq'}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-
-                            {(val?.discount || val?.free_delivery) && (
-                              <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                                {val?.discount && (
-                                  <span className="rounded-[6px] bg-[#DCFCE7] px-2 py-0.5 text-[11px] font-bold text-[#15803D]">
-                                    {val.discount}
-                                  </span>
-                                )}
-                                {val?.free_delivery && (
-                                  <span className="flex items-center gap-1 rounded-full bg-[#F3E8FF] px-2.5 py-0.5 text-[11px] font-bold text-[#7C3AED]">
-                                    <FreeDeliveryIcon />
-                                    Bepul yetkazish
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </Link>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </Carousel>
-
-            <button
-              onClick={() => carouselRef.current?.prev()}
-              className="absolute -left-5 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
-            >
-              <LeftOutlined />
-            </button>
-            <button
-              onClick={() => carouselRef.current?.next()}
-              className="absolute -right-5 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
-            >
-              <RightOutlined />
-            </button>
+      {isLoading ? (
+        <>
+          {/* Mobile skeleton */}
+          <div className="hide-scrollbar flex gap-4 overflow-x-auto px-4 pb-4 md:hidden">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="w-[240px] shrink-0">
+                <SkeletonCard />
+              </div>
+            ))}
           </div>
-        )}
-      </div>
+          {/* Desktop skeleton */}
+          <div className="hidden grid-cols-4 gap-6 px-4 md:grid md:px-0">
+            {[1, 2, 3, 4].map((i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        </>
+      ) : restaurants.length === 0 ? (
+        <div className="flex flex-col items-center justify-center gap-3 px-4 py-12 text-center md:px-0">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#F3F4F6]">
+            <svg
+              width="30"
+              height="30"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#9CA3AF"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 3h2l.4 2M7 13h10l4-8H5.4L7 13z" />
+              <circle cx="9" cy="21" r="1" />
+              <circle cx="20" cy="21" r="1" />
+            </svg>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-[15px] font-bold text-[#0c0c0c]">
+              Hozircha hamkor do'konlar mavjud emas
+            </span>
+            <span className="text-[13px] text-[#6B7280]">
+              Tez orada yangi do'konlar qo'shiladi, kuzatib boring
+            </span>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Mobile Horizontal Scroll vs Desktop Grid */}
+          <div className="md:hidden">
+            <div className="hide-scrollbar flex gap-4 overflow-x-auto px-4 pb-4">
+              {restaurants.map((val: any, i: number) => {
+                const secureImage = val?.banner?.replace('http://', 'https://')
+                const status = getStoreStatus(val)
+
+                return (
+                  <Link
+                    key={'store-mobile-' + i}
+                    href={`/store/${val?.uuid}?id=${val?.id}`}
+                    onClick={(e) => {
+                      if (!status.isOpen) {
+                        e.preventDefault()
+                        message.warning("Bu do'kon hozir yopiq")
+                      }
+                    }}
+                    className={`flex w-[240px] shrink-0 flex-col gap-3 ${!status.isOpen ? 'cursor-not-allowed' : ''}`}
+                  >
+                    <div className="premium-card relative h-[160px] w-full overflow-hidden">
+                      {secureImage ? (
+                        <img
+                          src={secureImage}
+                          alt={val?.name}
+                          className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+                            !status.isOpen ? 'contrast-[85%] grayscale-[50%]' : ''
+                          }`}
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-gray-100 to-gray-200" />
+                      )}
+
+                      {/* Closed overlay */}
+                      {!status.isOpen && (
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[1.5px]">
+                          <span className="rounded-full bg-[#EF4444] px-3 py-1 text-[12px] font-extrabold uppercase tracking-wider text-white shadow-lg">
+                            Hozir yopiq
+                          </span>
+                          {status.timeRange && (
+                            <span className="mt-1 text-[10px] font-medium text-white/90">
+                              Ish vaqti: {status.timeRange}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Delivery & Rating badge on image */}
+                      <div className="absolute bottom-2 left-2 z-20 flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1 shadow-sm backdrop-blur-sm">
+                        <LightningIcon />
+                        <span className="text-[11px] font-bold text-[#333]">
+                          {val?.delivery_time || '20 min'}
+                        </span>
+                        {val?.rating && (
+                          <>
+                            <span className="h-3 w-px bg-gray-300" />
+                            <StarIcon style={{ fontSize: 10, color: '#F59E0B' }} />
+                            <span className="text-[11px] font-extrabold text-[#333]">
+                              {val.rating}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 px-1">
+                      <span className="line-clamp-1 text-[15px] font-extrabold text-[#0c0c0c]">
+                        {val?.name}
+                      </span>
+
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {status.timeRange && (
+                          <span className="flex items-center gap-0.5 text-[12px] text-[#6B7280]">
+                            <ClockIcon />
+                            {status.timeRange}
+                          </span>
+                        )}
+                        {!status.isOpen && (
+                          <span className="text-[12px] font-bold text-[#EF4444]">
+                            {status.label || 'Yopiq'}
+                          </span>
+                        )}
+                      </div>
+
+                      {(val?.discount || val?.free_delivery) && (
+                        <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                          {val?.discount && (
+                            <span className="rounded-[6px] bg-[#DCFCE7] px-2 py-0.5 text-[10px] font-bold text-[#15803D]">
+                              {val.discount}
+                            </span>
+                          )}
+                          {val?.free_delivery && (
+                            <span className="flex items-center gap-1 rounded-full bg-[#F3E8FF] px-2 py-0.5 text-[10px] font-bold text-[#7C3AED]">
+                              <FreeDeliveryIcon />
+                              Bepul
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Carousel for Desktop */}
+          <div className="hidden px-4 md:block md:px-0">
+            {!isLoading && chunkedRestaurants.length > 0 && (
+              <div className="group relative">
+                <Carousel ref={carouselRef} dots={false} infinite={false}>
+                  {chunkedRestaurants.map((group, slideIndex) => (
+                    <div key={slideIndex}>
+                      <div className="grid grid-cols-4 gap-6">
+                        {group.map((val: any, i: number) => {
+                          const secureImage = val?.banner?.replace('http://', 'https://')
+                          const status = getStoreStatus(val)
+
+                          return (
+                            <Link
+                              key={'store-desktop-' + slideIndex + '-' + i}
+                              href={`/store/${val?.uuid}?id=${val?.id}`}
+                              onClick={(e) => {
+                                if (!status.isOpen) {
+                                  e.preventDefault()
+                                  message.warning("Bu do'kon hozir yopiq")
+                                }
+                              }}
+                              className={`group flex flex-col gap-3 ${!status.isOpen ? 'cursor-not-allowed' : ''}`}
+                            >
+                              <div className="premium-card group relative h-[200px] w-full overflow-hidden">
+                                {secureImage ? (
+                                  <img
+                                    src={secureImage}
+                                    alt={val?.name}
+                                    className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
+                                      !status.isOpen ? 'contrast-[85%] grayscale-[50%]' : ''
+                                    }`}
+                                  />
+                                ) : (
+                                  <div className="h-full w-full bg-gray-100" />
+                                )}
+
+                                {/* Closed overlay */}
+                                {!status.isOpen && (
+                                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[1.5px]">
+                                    <span className="rounded-full bg-[#EF4444] px-3.5 py-1.5 text-[13px] font-extrabold uppercase tracking-wider text-white shadow-lg">
+                                      Hozir yopiq
+                                    </span>
+                                    {status.timeRange && (
+                                      <span className="mt-1 text-[11px] font-medium text-white/90">
+                                        Ish vaqti: {status.timeRange}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex flex-col gap-0.5 px-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="line-clamp-1 text-[16px] font-bold text-[#0c0c0c] transition-colors hover:text-[#00D166]">
+                                    {val?.name}
+                                  </span>
+                                  {val?.rating && (
+                                    <span className="flex shrink-0 items-center gap-1 text-[13px] font-bold text-[#0c0c0c]">
+                                      <StarIcon style={{ color: '#F59E0B' }} />
+                                      {val.rating}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <LightningIcon />
+                                  <span className="text-[13px] text-[#6B7280]">
+                                    {val?.delivery_time || '15–30 daqiqa'}
+                                  </span>
+                                  {status.timeRange && (
+                                    <>
+                                      <span className="text-[#D1D5DB]">•</span>
+                                      <span className="flex items-center gap-0.5 text-[12px] text-[#6B7280]">
+                                        <ClockIcon />
+                                        {status.timeRange}
+                                      </span>
+                                    </>
+                                  )}
+                                  {!status.isOpen && (
+                                    <>
+                                      <span className="text-[#D1D5DB]">•</span>
+                                      <span className="text-[12px] font-bold text-[#EF4444]">
+                                        {status.label || 'Yopiq'}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+
+                                {(val?.discount || val?.free_delivery) && (
+                                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                    {val?.discount && (
+                                      <span className="rounded-[6px] bg-[#DCFCE7] px-2 py-0.5 text-[11px] font-bold text-[#15803D]">
+                                        {val.discount}
+                                      </span>
+                                    )}
+                                    {val?.free_delivery && (
+                                      <span className="flex items-center gap-1 rounded-full bg-[#F3E8FF] px-2.5 py-0.5 text-[11px] font-bold text-[#7C3AED]">
+                                        <FreeDeliveryIcon />
+                                        Bepul yetkazish
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </Carousel>
+
+                <button
+                  onClick={() => carouselRef.current?.prev()}
+                  className="absolute -left-5 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+                >
+                  <LeftOutlined />
+                </button>
+                <button
+                  onClick={() => carouselRef.current?.next()}
+                  className="absolute -right-5 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+                >
+                  <RightOutlined />
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   )
 }

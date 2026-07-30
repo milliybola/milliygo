@@ -83,7 +83,7 @@ const RestaurantItem = () => {
       <div className="mb-6">
         <Typography.Title
           level={2}
-          className="!m-0 text-[24px] font-bold text-gray-900 lg:text-[32px]"
+          className="!m-0 text-[17px] font-bold text-gray-900 lg:text-[32px]"
         >
           {restaurantData?.name || 'Restoran'}
         </Typography.Title>
@@ -96,7 +96,7 @@ const RestaurantItem = () => {
         </aside>
 
         {/* Middle content: Products */}
-        <main className="min-w-0 flex-1">
+        <main className="w-full min-w-0 flex-1">
           <StoreItemDetails restaurantData={restaurantData} restaurantLoading={restaurantLoading} />
         </main>
 

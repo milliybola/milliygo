@@ -49,8 +49,12 @@ const StoreItemCart = ({
 
   const subtotal = cartItems.reduce((s: number, i: any) => s + i.price * i.quantity, 0)
   const serviceFee = Math.round(subtotal * SERVICE_FEE_PERCENT)
-  const remaining = Math.max(0, freeDeliveryThreshold - subtotal)
-  const activeDeliveryFee = remaining > 0 ? deliveryFee : 0
+  // 0 (yoki manfiy) qiymat "bu hamkorda bepul yetkazib berish aksiyasi yo'q" degani —
+  // shuning uchun bunday holatda yetkazib berish har doim pullik bo'lishi kerak.
+  const hasFreeDeliveryOffer = freeDeliveryThreshold > 0
+  const remaining = hasFreeDeliveryOffer ? Math.max(0, freeDeliveryThreshold - subtotal) : 0
+  const activeDeliveryFee =
+    hasFreeDeliveryOffer && subtotal >= freeDeliveryThreshold ? 0 : deliveryFee
   const total = subtotal + activeDeliveryFee
   const isMinOrderSatisfied = subtotal >= minOrderAmount
   const canCheckout = isInServiceArea && isMinOrderSatisfied

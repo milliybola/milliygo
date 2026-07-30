@@ -36,27 +36,6 @@ const ServicesSelector = () => {
 
   const services: IComingSoonItem[] = [
     {
-      id: 'delivery',
-      name: 'Yetkazib berish',
-      bgColorClass: 'bg-purple-50/70 border border-purple-100/50 hover:border-purple-200',
-      iconColorClass: 'text-purple-500',
-      icon: (
-        <svg
-          className="h-7 w-7"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.8}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-          />
-        </svg>
-      ),
-    },
-    {
       id: 'cargo',
       name: 'Kargo(yuk)',
       bgColorClass: 'bg-red-50/70 border border-red-100/50 hover:border-red-200',
@@ -104,27 +83,7 @@ const ServicesSelector = () => {
         </svg>
       ),
     },
-    {
-      id: 'market',
-      name: 'Market',
-      bgColorClass: 'bg-cyan-50/70 border border-cyan-100/50 hover:border-cyan-200',
-      iconColorClass: 'text-cyan-500',
-      icon: (
-        <svg
-          className="h-7 w-7"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={1.8}
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-      ),
-    },
+
     {
       id: 'services',
       name: 'Maishiy Xizmatlar',
@@ -172,26 +131,32 @@ const ServicesSelector = () => {
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-3 gap-x-2 gap-y-5 px-4 md:grid-cols-6 md:gap-6 md:px-0">
+      <div className="grid grid-cols-2 gap-3 px-4 sm:grid-cols-4 sm:gap-4 md:px-0">
         {services.map((item) => {
           return (
-            <div
+            <button
               key={item.id}
+              type="button"
               onClick={() => handleServiceClick(item)}
-              className="group flex cursor-pointer flex-col items-center gap-2 transition-transform active:scale-95"
+              className="group relative flex flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 text-center shadow-[0_2px_10px_rgba(0,0,0,0.03)] transition-all duration-300 hover:-translate-y-1 hover:border-gray-200 hover:shadow-[0_10px_28px_rgba(0,0,0,0.07)] active:scale-95"
             >
+              {/* Tez kunda badge */}
+              <span className="absolute right-2.5 top-2.5 rounded-full bg-[#C5A059]/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#B38F4D]">
+                Tez kunda
+              </span>
+
               {/* Icon Container */}
               <div
-                className={`flex h-14 w-14 items-center justify-center rounded-2xl p-1.5 shadow-sm transition-all duration-300 md:h-16 md:w-16 ${item.bgColorClass} ${item.iconColorClass}`}
+                className={`flex h-14 w-14 items-center justify-center rounded-2xl shadow-sm transition-transform duration-300 group-hover:scale-105 md:h-16 md:w-16 ${item.bgColorClass} ${item.iconColorClass}`}
               >
                 {item.icon}
               </div>
 
               {/* Name */}
-              <span className="max-w-[80px] text-center text-[11px] font-bold leading-tight text-gray-600 transition-colors group-hover:text-gray-900 md:max-w-none md:text-[12px]">
+              <span className="text-[12.5px] font-bold leading-tight text-gray-700 transition-colors group-hover:text-gray-900 md:text-[13px]">
                 {item.name}
               </span>
-            </div>
+            </button>
           )
         })}
       </div>

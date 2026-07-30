@@ -1,4 +1,4 @@
-import { Typography } from 'antd'
+import { Button, Typography } from 'antd'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
@@ -84,6 +84,7 @@ import StoreItemCategories from './components/StoreItemCategories'
 import StoreItemDetails from './components/StoreItemDetails'
 import StoreItemCart from './components/StoreItemCart'
 import { useCartStore } from '@/store/cartStore'
+import { ArrowLeftOutlined } from '@ant-design/icons'
 
 const StoreItem = () => {
   const t = useTranslations()
@@ -144,16 +145,25 @@ const StoreItem = () => {
   const isMinOrderSatisfied = subtotal >= minOrderAmount
 
   return (
-    <div className="container relative mx-auto mt-4 px-4 pb-20">
+    <div className="container relative mx-auto mt-4 px-0 pb-20 sm:px-4">
       {/* Sticky Header and Categories container for Mobile */}
-      <div className="sticky top-0 z-40 -mx-4 mb-4 border-b border-gray-100 bg-white/95 px-4 pb-2 pt-3 backdrop-blur-md lg:relative lg:top-auto lg:z-auto lg:mb-6 lg:border-none lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
-        <div className="mb-2 lg:mb-0">
-          <Typography.Title
-            level={2}
-            className="!m-0 px-4 text-[20px] font-bold text-gray-900 lg:text-[32px]"
-          >
-            {restaurantData?.name || 'Restoran'}
-          </Typography.Title>
+      <div className="sticky top-0 z-40 -mx-4 mb-4 border-b border-gray-100 bg-white/95 pb-2 pt-3 backdrop-blur-md lg:relative lg:top-auto lg:z-auto lg:mb-6 lg:border-none lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+        <div className="ms-4 flex items-center gap-2 sm:ms-0">
+          <div className="block lg:hidden">
+            <Button
+              onClick={() => router.back()}
+              className="h-10 w-10 rounded-full border-gray-200 text-gray-600 hover:text-gray-900"
+              icon={<ArrowLeftOutlined />}
+            ></Button>
+          </div>
+          <div className="lg:mb-0">
+            <Typography.Title
+              level={2}
+              className="!m-0 text-[17px] font-bold text-gray-900 lg:text-[32px]"
+            >
+              {restaurantData?.name || 'Restoran'}
+            </Typography.Title>
+          </div>
         </div>
 
         {/* Categories list on mobile only */}
@@ -169,7 +179,7 @@ const StoreItem = () => {
         </aside>
 
         {/* Middle content: Products */}
-        <main className="min-w-0 flex-1">
+        <main className="w-full min-w-0 flex-1">
           <StoreItemDetails restaurantData={restaurantData} restaurantLoading={restaurantLoading} />
         </main>
 

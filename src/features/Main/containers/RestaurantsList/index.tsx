@@ -1,4 +1,4 @@
-import { Flex, Typography } from 'antd'
+import { Flex, Typography, message } from 'antd'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
@@ -314,18 +314,24 @@ function RestaurantsList() {
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[17px] font-bold text-[#0c0c0c]">
-              Bu kategoriyada restoranlar topilmadi
+              {activeCategory === null
+                ? 'Hozircha restoranlar mavjud emas'
+                : 'Bu kategoriyada restoranlar topilmadi'}
             </span>
             <span className="text-[14px] text-[#6B7280]">
-              Boshqa kategoriyani tanlang yoki filtrni olib tashlang
+              {activeCategory === null
+                ? "Tez orada yangi restoranlar qo'shiladi, kuzatib boring"
+                : 'Boshqa kategoriyani tanlang yoki filtrni olib tashlang'}
             </span>
           </div>
-          <button
-            onClick={() => setActiveCategory(null)}
-            className="mt-1 rounded-[12px] bg-[#0c0c0c] px-6 py-2.5 text-[14px] font-semibold text-white transition hover:bg-[#00D166]"
-          >
-            Hammasini ko'rish
-          </button>
+          {activeCategory !== null && (
+            <button
+              onClick={() => setActiveCategory(null)}
+              className="mt-1 rounded-[12px] bg-[#0c0c0c] px-6 py-2.5 text-[14px] font-semibold text-white transition hover:bg-[#00D166]"
+            >
+              Hammasini ko'rish
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-x-5 gap-y-7 px-4 sm:grid-cols-2 md:px-0 lg:grid-cols-3">
@@ -339,7 +345,13 @@ function RestaurantsList() {
                 <Link
                   key={'restaurant-item-' + i}
                   href={`/restaurant/${val?.uuid}?id=${val?.id}`}
-                  className="group flex flex-col gap-3"
+                  onClick={(e) => {
+                    if (!status.isOpen) {
+                      e.preventDefault()
+                      message.warning('Bu restoran hozir yopiq')
+                    }
+                  }}
+                  className={`group flex flex-col gap-3 ${!status.isOpen ? 'cursor-not-allowed' : ''}`}
                 >
                   {/* Image */}
                   <div className="relative h-[185px] w-full overflow-hidden rounded-[16px] bg-[#F3F4F6]">

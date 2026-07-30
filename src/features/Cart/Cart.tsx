@@ -28,7 +28,6 @@ const CartFullPage = () => {
   const t = useTranslations()
   const router = useRouter()
   const querySlug = (router.query.store || router.query.slug) as string
-  const { id } = router.query
   const { carts, clearCart } = useCartStore()
 
   const authContext = useContext(AuthContext) as any
@@ -54,7 +53,7 @@ const CartFullPage = () => {
 
   const { data: restaurantData, isLoading: restaurantLoading } = useQuery({
     queryKey: ['restaurant-detail', querySlug],
-    queryFn: () => getRestaurantDetail({ uuid: id as string }),
+    queryFn: () => getRestaurantDetail({ uuid: querySlug as string }),
     enabled: !!querySlug,
   })
 
@@ -92,8 +91,12 @@ const CartFullPage = () => {
   const minOrderAmount =
     partnerData?.min_order_amount !== undefined ? Number(partnerData.min_order_amount) : 0
 
-  const remaining = Math.max(0, freeDeliveryThreshold - subtotal)
-  const activeDeliveryFee = remaining > 0 ? deliveryFee : 0
+  // 0 (yoki manfiy) qiymat "bu hamkorda bepul yetkazib berish aksiyasi yo'q" degani —
+  // shuning uchun bunday holatda yetkazib berish har doim pullik bo'lishi kerak.
+  const hasFreeDeliveryOffer = freeDeliveryThreshold > 0
+  const remaining = hasFreeDeliveryOffer ? Math.max(0, freeDeliveryThreshold - subtotal) : 0
+  const activeDeliveryFee =
+    hasFreeDeliveryOffer && subtotal >= freeDeliveryThreshold ? 0 : deliveryFee
   const total = subtotal + activeDeliveryFee
   const isMinOrderSatisfied = subtotal >= minOrderAmount
 

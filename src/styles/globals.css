@@ -82,7 +82,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Satisfy&display=swap');
 
 .pacifico-regular {
-  font-family: "Satisfy", cursive !important;
+  font-family: 'Satisfy', cursive !important;
   font-weight: 400;
   font-style: normal;
 }
@@ -263,7 +263,7 @@
 .opened-calendar,
 .opened-calendar .ant-picker-panel-container,
 .opened-calendar .ant-picker-range-wrapper,
-.opened-calendar .ant-picker-panel-layout>div {
+.opened-calendar .ant-picker-panel-layout > div {
   box-shadow: none !important;
   width: 100% !important;
   height: 100% !important;
@@ -436,11 +436,11 @@
   height: inherit !important;
 }
 
-.slick-slide>div {
+.slick-slide > div {
   height: 100% !important;
 }
 
-.hide-required-mark .ant-form-item .ant-form-item-label>label::after {
+.hide-required-mark .ant-form-item .ant-form-item-label > label::after {
   display: none !important;
 }
 
@@ -483,12 +483,12 @@
   background-color: #000000;
 }
 
-.custom-table tfoot>tr {
+.custom-table tfoot > tr {
   background: black;
   color: white;
 }
 
-.custom-table tbody>tr:hover {
+.custom-table tbody > tr:hover {
   background-color: #ffc107;
 }
 
@@ -1082,11 +1082,11 @@ input[type='number'] {
   border-top: 1px solid #e5e7eb !important;
 }
 
-.side-borderless-table .ant-table-thead>tr>th::before {
+.side-borderless-table .ant-table-thead > tr > th::before {
   height: 100% !important;
 }
 
-.side-borderless-table .ant-table-thead>tr>th {
+.side-borderless-table .ant-table-thead > tr > th {
   padding: 12px 20px !important;
 }
 
@@ -1108,8 +1108,6 @@ input[type='number'] {
 .ant-layout-header {
   padding: 0 0 !important;
 }
-
-
 
 .evisa-application .ant-steps-item-active .ant-steps-item-icon {
   width: 28px !important;
@@ -1259,7 +1257,7 @@ input[type='number'] {
   min-height: 42px !important;
 }
 
-.evisa-application .ant-radio-button-wrapper>.ant-radio-button {
+.evisa-application .ant-radio-button-wrapper > .ant-radio-button {
   height: 42px !important;
 }
 
@@ -1369,7 +1367,7 @@ body {
 
 /* Mobile-first card enhancements */
 .mobile-card {
-  @apply bg-white rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-[#efefed];
+  @apply rounded-2xl border border-[#efefed] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)];
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1435,17 +1433,13 @@ body {
 }
 
 /* Premium Typography & Spacing */
-.section-title {
-  @apply text-[22px] font-extrabold tracking-tight text-[#0c0c0c] mb-2;
-}
-
 .section-subtitle {
-  @apply text-[14px] text-[#6B7280] mb-4;
+  @apply mb-4 text-[14px] text-[#6B7280];
 }
 
 /* Modern Card Styles */
 .premium-card {
-  @apply bg-white rounded-3xl transition-all duration-300;
+  @apply rounded-3xl bg-white transition-all duration-300;
   box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
 }
 
@@ -1464,18 +1458,24 @@ body {
 
 /* Floating Search Bar Style */
 .floating-search {
-  @apply sticky top-4 z-40 mx-4 flex items-center gap-3 rounded-2xl border border-white bg-white/70 px-4 py-3 backdrop-blur-xl shadow-lg transition-all duration-300;
+  @apply sticky top-4 z-40 mx-4 flex items-center gap-3 rounded-2xl border border-white bg-white/70 px-4 py-3 shadow-lg backdrop-blur-xl transition-all duration-300;
 }
 
 /* Glassmorphism Variants */
 .glass-effect {
-  @apply bg-white/80 backdrop-blur-lg border border-white/20;
+  @apply border border-white/20 bg-white/80 backdrop-blur-lg;
 }
 
 /* Animation Utilities */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fade-up {
@@ -1484,10 +1484,10 @@ body {
 
 /* --- Milliy-Classic: Refined Uzbek Vibe --- */
 :root {
-  --milliy-blue: #0052B4;
-  --milliy-turquoise: #00B5AD;
-  --milliy-gold: #C5A059;
-  --milliy-bg: #FFFFFF;
+  --milliy-blue: #0052b4;
+  --milliy-turquoise: #00b5ad;
+  --milliy-gold: #c5a059;
+  --milliy-bg: #ffffff;
   --milliy-text: #111827;
 }
 
@@ -1510,11 +1510,11 @@ body {
 }
 
 .milliy-card {
-  @apply bg-white rounded-3xl border border-[#E5E7EB] shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300;
+  @apply rounded-3xl border border-[#E5E7EB] bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300;
 }
 
 .milliy-card:hover {
-  @apply shadow-[0_12px_30px_rgba(0,82,180,0.08)] -translate-y-1;
+  @apply -translate-y-1 shadow-[0_12px_30px_rgba(0,82,180,0.08)];
 }
 
 .milliy-button {
@@ -1533,17 +1533,25 @@ body {
 }
 
 .section-title {
-  @apply text-2xl md:text-3xl font-bold text-[#111] mb-6 flex items-center gap-3;
+  @apply mb-3 flex items-center gap-2 text-lg font-bold tracking-tight text-[#111] md:mb-6 md:gap-3 md:text-2xl lg:text-3xl;
 }
 
 .section-title::before {
   content: '';
   display: block;
-  width: 24px;
-  height: 24px;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Crect x='6' y='6' width='12' height='12' rx='1' stroke='%23C5A059' stroke-width='2' fill='%23C5A059' fill-opacity='0.15'/%3E%3Crect x='6' y='6' width='12' height='12' rx='1' transform='rotate(45,12,12)' stroke='%23C5A059' stroke-width='2' fill='%23C5A059' fill-opacity='0.15'/%3E%3Ccircle cx='12' cy='12' r='2.5' fill='%23C5A059'/%3E%3C/svg%3E");
   background-size: contain;
   background-repeat: no-repeat;
+}
+
+@media (min-width: 768px) {
+  .section-title::before {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 .milliy-pattern-bg {
@@ -1553,12 +1561,12 @@ body {
 
 /* Premium Uzbek/Milliy Theme Classes */
 :root {
-  --milliy-blue-dark: #0A192F;
-  --milliy-blue-light: #0052B4;
-  --milliy-gold: #C5A059;
-  --milliy-gold-hover: #E5C583;
+  --milliy-blue-dark: #0a192f;
+  --milliy-blue-light: #0052b4;
+  --milliy-gold: #c5a059;
+  --milliy-gold-hover: #e5c583;
   --milliy-turquoise: #008080;
-  --milliy-turquoise-light: #E0F2F1;
+  --milliy-turquoise-light: #e0f2f1;
 }
 
 /* Girih Geometric blueprint pattern */
@@ -1588,7 +1596,7 @@ body {
   position: absolute;
   top: -12px;
   left: 24px;
-  background: #FDFBF7;
+  background: #fdfbf7;
   color: var(--milliy-gold);
   padding: 0 8px;
   font-size: 16px;
@@ -1600,7 +1608,7 @@ body {
   position: absolute;
   bottom: -12px;
   right: 24px;
-  background: #FDFBF7;
+  background: #fdfbf7;
   color: var(--milliy-gold);
   padding: 0 8px;
   font-size: 16px;
@@ -1612,5 +1620,3 @@ body {
   background-size: auto 100%;
   background-repeat: repeat-x;
 }
-
-

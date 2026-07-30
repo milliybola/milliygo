@@ -15,6 +15,10 @@ import { useAuthStore } from '@/features/Account/auth/store/authStore'
 import { getOrders } from '@/features/Cart/api'
 import { rateCourier } from '@/features/Orders/api'
 import { Modal, Typography, Input, message } from 'antd'
+import { useYMaps } from '@pbe/react-yandex-maps'
+import { useLocationStore } from '@/store/useLocationStore'
+import { checkServiceArea } from '@/helpers/location-helper'
+import LocationModal from '@/components/common/CHeader/components/LocationModal'
 
 const { Text, Title } = Typography
 const { TextArea } = Input
@@ -37,6 +41,52 @@ export default function Home() {
   const router = useRouter()
 
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+
+  // Delivery location (asked here too, since CHeader — where this normally
+  // lives — is desktop-only and never mounts on mobile)
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false)
+  const { location, setLocation, setIsInServiceArea } = useLocationStore()
+  const ymaps = useYMaps(['geocode'])
+
+  useEffect(() => {
+    if (location || !ymaps) return
+
+    if (!navigator.geolocation) {
+      setIsLocationModalOpen(true)
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords
+        const inArea = checkServiceArea(latitude, longitude)
+
+        if (inArea) {
+          try {
+            const result = await ymaps.geocode([latitude, longitude])
+            const firstGeoObject = result.geoObjects.get(0)
+            const addr = firstGeoObject
+              ? (firstGeoObject as any).getAddressLine()
+              : 'Mening joylashuvim'
+
+            setLocation({ lat: latitude, lng: longitude, address: addr })
+            setIsInServiceArea(true)
+          } catch (error) {
+            console.error('Geocoding error:', error)
+            setIsLocationModalOpen(true)
+          }
+        } else {
+          message.warning(
+            "Siz xizmat ko'rsatish hududidan tashqaridasiz. Iltimos, hududni tanlang."
+          )
+          setIsLocationModalOpen(true)
+        }
+      },
+      () => {
+        setIsLocationModalOpen(true)
+      }
+    )
+  }, [location, setLocation, setIsInServiceArea, ymaps])
 
   // Fetch client orders
   const { data: ordersData, refetch: refetchOrders } = useQuery({
@@ -187,21 +237,21 @@ export default function Home() {
         </div>
       </div>
       {/* Milliy-Classic Header Section */}
-      <div className="relative overflow-hidden rounded-b-[36px] border-b border-[#C5A059]/20 bg-gradient-to-br from-[#FAF9F6] via-[#FDFBF7] to-[#FAF9F6] px-4 pb-7 pt-8 shadow-[0_15px_35px_rgba(197,160,89,0.06)] md:px-[80px] xl:px-[160px]">
+      <div className="relative overflow-hidden rounded-b-[28px] border-b border-[#C5A059]/20 bg-gradient-to-br from-[#FAF9F6] via-[#FDFBF7] to-[#FAF9F6] px-4 pb-5 pt-6 shadow-[0_15px_35px_rgba(197,160,89,0.06)] md:rounded-b-[36px] md:px-[80px] md:pb-7 md:pt-8 xl:px-[160px]">
         {/* Girih blueprint texture */}
         <div className="milliy-girih-blueprint pointer-events-none absolute inset-0 opacity-70" />
 
         <div className="relative z-10 flex flex-col items-center justify-between gap-8 lg:flex-row">
           {/* Left Text Column */}
-          <div className="flex max-w-xl flex-1 flex-col text-left">
+          <div className="flex max-w-xl flex-1 flex-col gap-1.5 text-left">
             {/* <span className="flex w-fit select-none items-center gap-1.5 rounded-full border border-[#C5A059]/25 bg-[#C5A059]/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.25em] text-[#B38F4D] shadow-[inset_0_1px_8px_rgba(197,160,89,0.05)]"> */}
             {/* <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-[#C5A059]" />
               O&#39;zimizniki
             </span> */}
-            <h1 className="!m-0 text-2xl font-black leading-[1.2] tracking-tight text-gray-900 md:text-3xl lg:text-[36px]">
+            <h1 className="!m-0 text-lg font-black leading-[1.25] tracking-tight text-gray-900 md:text-3xl lg:text-[36px]">
               Assalomu alaykum! Xo'jayin👋
             </h1>
-            <p className="!m-0 text-[14.5px] font-semibold leading-relaxed text-gray-600 md:text-base">
+            <p className="!m-0 text-[12.5px] font-semibold leading-relaxed text-gray-600 md:text-base">
               G'allaorolda restoran, kafe va do'konlardan tezkor yetkazib beramiz.
             </p>
 
@@ -259,15 +309,14 @@ export default function Home() {
           <h2 className="section-title px-4 md:px-0">Kategoriyalar</h2>
           <QuickCategories />
         </div> */}
+        <section id="restaurants-section" className="mt-14 scroll-mt-24">
+          {/* <h2 className="section-title px-4 md:px-0">Restoranlar</h2> */}
+          <RestaurantsList />
+        </section>
 
         <section id="stores-section" className="mt-14 scroll-mt-24">
           {/* <h2 className="section-title px-4 md:px-0">Do'konlar</h2> */}
           <StoreList />
-        </section>
-
-        <section id="restaurants-section" className="mt-14 scroll-mt-24">
-          {/* <h2 className="section-title px-4 md:px-0">Restoranlar</h2> */}
-          <RestaurantsList />
         </section>
 
         {/* Tez kunda Section */}
@@ -284,7 +333,10 @@ export default function Home() {
       </div>
 
       {/* Spacing for bottom nav */}
-      <div className="h-24 md:hidden" />
+      <div className="h-0 h-24 md:hidden" />
+
+      {/* Delivery location prompt */}
+      <LocationModal open={isLocationModalOpen} onClose={() => setIsLocationModalOpen(false)} />
 
       {/* Premium Courier Rating Modal */}
       <Modal

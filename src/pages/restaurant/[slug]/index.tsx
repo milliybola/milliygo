@@ -43,7 +43,7 @@ const StoreItemPage = () => {
   if (!hasHydrated) return null
 
   return (
-    <main className="mb-20 bg-white px-10">
+    <main className="mb-20 bg-white px-3 sm:px-10">
       <RestaurantItem />
     </main>
   )
