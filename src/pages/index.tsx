@@ -3,10 +3,7 @@ import RestaurantsList from '@/features/Main/containers/RestaurantsList'
 import StoreList from '@/features/Main/containers/StoreList'
 import QuickCategories from '@/features/Main/components/QuickCategories'
 import ServicesSelector from '@/features/Main/components/ServicesSelector'
-import { SearchOutlined, StarFilled, ThunderboltFilled, ShopFilled } from '@ant-design/icons'
-import { useRouter } from 'next/router'
-import Image from 'next/image'
-import logo from '/public/logo.png'
+import { StarFilled, ThunderboltFilled, ShopFilled } from '@ant-design/icons'
 
 import { useQuery } from '@tanstack/react-query'
 import { useContext, useState, useEffect, useMemo } from 'react'
@@ -15,10 +12,6 @@ import { useAuthStore } from '@/features/Account/auth/store/authStore'
 import { getOrders } from '@/features/Cart/api'
 import { rateCourier } from '@/features/Orders/api'
 import { Modal, Typography, Input, message } from 'antd'
-import { useYMaps } from '@pbe/react-yandex-maps'
-import { useLocationStore } from '@/store/useLocationStore'
-import { checkServiceArea } from '@/helpers/location-helper'
-import LocationModal from '@/components/common/CHeader/components/LocationModal'
 
 const { Text, Title } = Typography
 const { TextArea } = Input
@@ -38,55 +31,7 @@ export async function getStaticProps(context: any) {
 }
 
 export default function Home() {
-  const router = useRouter()
-
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
-
-  // Delivery location (asked here too, since CHeader — where this normally
-  // lives — is desktop-only and never mounts on mobile)
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false)
-  const { location, setLocation, setIsInServiceArea } = useLocationStore()
-  const ymaps = useYMaps(['geocode'])
-
-  useEffect(() => {
-    if (location || !ymaps) return
-
-    if (!navigator.geolocation) {
-      setIsLocationModalOpen(true)
-      return
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords
-        const inArea = checkServiceArea(latitude, longitude)
-
-        if (inArea) {
-          try {
-            const result = await ymaps.geocode([latitude, longitude])
-            const firstGeoObject = result.geoObjects.get(0)
-            const addr = firstGeoObject
-              ? (firstGeoObject as any).getAddressLine()
-              : 'Mening joylashuvim'
-
-            setLocation({ lat: latitude, lng: longitude, address: addr })
-            setIsInServiceArea(true)
-          } catch (error) {
-            console.error('Geocoding error:', error)
-            setIsLocationModalOpen(true)
-          }
-        } else {
-          message.warning(
-            "Siz xizmat ko'rsatish hududidan tashqaridasiz. Iltimos, hududni tanlang."
-          )
-          setIsLocationModalOpen(true)
-        }
-      },
-      () => {
-        setIsLocationModalOpen(true)
-      }
-    )
-  }, [location, setLocation, setIsInServiceArea, ymaps])
 
   // Fetch client orders
   const { data: ordersData, refetch: refetchOrders } = useQuery({
@@ -215,27 +160,6 @@ export default function Home() {
 
   return (
     <main className="milliy-ikat-pattern relative flex min-h-screen flex-col bg-[#F9FAFB]">
-      <div className="sticky top-0 z-40 flex items-center gap-3 border-b border-[#efefed] bg-white/90 px-4 py-3 backdrop-blur-md md:hidden">
-        <div className="flex-shrink-0" onClick={() => router.push('/')}>
-          <Image
-            src={logo}
-            alt="MilliyGo"
-            width={40}
-            height={40}
-            className="rounded-xl object-contain ring-1 ring-[#C5A059]/25"
-          />
-        </div>
-
-        <div
-          onClick={() => router.push('/search')}
-          className="flex flex-1 items-center gap-3 rounded-2xl bg-[#F3F4F6] px-4 py-2.5 transition-all active:scale-[0.98]"
-        >
-          <SearchOutlined className="text-lg text-[#999]" />
-          <span className="text-[13px] font-medium text-[#999]">
-            Restoran yoki taom qidiring...
-          </span>
-        </div>
-      </div>
       {/* Milliy-Classic Header Section */}
       <div className="relative overflow-hidden rounded-b-[28px] border-b border-[#C5A059]/20 bg-gradient-to-br from-[#FAF9F6] via-[#FDFBF7] to-[#FAF9F6] px-4 pb-5 pt-6 shadow-[0_15px_35px_rgba(197,160,89,0.06)] md:rounded-b-[36px] md:px-[80px] md:pb-7 md:pt-8 xl:px-[160px]">
         {/* Girih blueprint texture */}
@@ -334,9 +258,6 @@ export default function Home() {
 
       {/* Spacing for bottom nav */}
       <div className="h-0 h-24 md:hidden" />
-
-      {/* Delivery location prompt */}
-      <LocationModal open={isLocationModalOpen} onClose={() => setIsLocationModalOpen(false)} />
 
       {/* Premium Courier Rating Modal */}
       <Modal

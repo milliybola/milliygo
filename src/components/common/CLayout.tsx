@@ -94,7 +94,7 @@ const CLayout: FC<{ children: ReactNode }> = ({ children }) => {
       {/* Milliy-Classic Top Strip */}
       <div className="z-[100] h-1.5 w-full bg-[#0052B4] shadow-sm" />
 
-      {!isMobile && <CHeader />}
+      <CHeader />
 
       <main className={`flex-grow ${isMobile ? 'pb-24' : 'bg-white'}`}>
         <div className="relative">{children}</div>

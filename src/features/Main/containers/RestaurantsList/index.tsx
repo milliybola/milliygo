@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { getBaseCategories } from '../../api'
 import { ICategory, IPartner } from '../../types'
+import { useLocationStore } from '@/store/useLocationStore'
+import { isPointInDeliveryZones } from '@/helpers/location-helper'
 
 const StarIcon = () => (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B" xmlns="http://www.w3.org/2000/svg">
@@ -221,6 +223,7 @@ import SkeletonCard from '@/components/common/SkeletonCard'
 function RestaurantsList() {
   const [activeCategory, setActiveCategory] = useState<number | null>(null)
   const [likedIds, setLikedIds] = useState<Set<number>>(new Set())
+  const { location } = useLocationStore()
 
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
     queryKey: ['base-categories'],
@@ -340,6 +343,9 @@ function RestaurantsList() {
               const secureImage = val?.banner?.replace('http://', 'https://')
               const isLiked = likedIds.has(val?.id ?? i)
               const status = getStoreStatus(val)
+              const isDeliverable =
+                !location || isPointInDeliveryZones(location.lat, location.lng, val?.delivery_zones)
+              const isBlocked = !status.isOpen || !isDeliverable
 
               return (
                 <Link
@@ -349,9 +355,12 @@ function RestaurantsList() {
                     if (!status.isOpen) {
                       e.preventDefault()
                       message.warning('Bu restoran hozir yopiq')
+                    } else if (!isDeliverable) {
+                      e.preventDefault()
+                      message.warning('Bu restoran sizning hududingizga yetkazib bermaydi')
                     }
                   }}
-                  className={`group flex flex-col gap-3 ${!status.isOpen ? 'cursor-not-allowed' : ''}`}
+                  className={`group flex flex-col gap-3 ${isBlocked ? 'cursor-not-allowed' : ''}`}
                 >
                   {/* Image */}
                   <div className="relative h-[185px] w-full overflow-hidden rounded-[16px] bg-[#F3F4F6]">
@@ -360,7 +369,7 @@ function RestaurantsList() {
                         src={secureImage}
                         alt={val?.name || 'Restaurant'}
                         className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-                          !status.isOpen ? 'contrast-[85%] grayscale-[50%]' : ''
+                          isBlocked ? 'contrast-[85%] grayscale-[50%]' : ''
                         }`}
                       />
                     )}
@@ -382,6 +391,15 @@ function RestaurantsList() {
                             Ish vaqti: {status.timeRange}
                           </span>
                         )}
+                      </div>
+                    )}
+
+                    {/* Out-of-delivery-zone overlay (only when it's open, otherwise "closed" already covers it) */}
+                    {status.isOpen && !isDeliverable && (
+                      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 px-3 text-center backdrop-blur-[1.5px]">
+                        <span className="rounded-full bg-[#F59E0B] px-3.5 py-1.5 text-[13px] font-extrabold uppercase tracking-wider text-white shadow-lg">
+                          Hududingizga yetkazmaydi
+                        </span>
                       </div>
                     )}
                   </div>

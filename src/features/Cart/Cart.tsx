@@ -13,6 +13,7 @@ import { useCartStore } from '@/store/cartStore'
 import CartDetail from './components/CartDetails'
 import StoreItemCart from './components/StoreItemCart'
 import { useLocationStore } from '@/store/useLocationStore'
+import { isPointInDeliveryZones } from '@/helpers/location-helper'
 import LocationModal from '@/components/common/CHeader/components/LocationModal'
 import {
   CheckCircleFilled,
@@ -100,6 +101,12 @@ const CartFullPage = () => {
   const total = subtotal + activeDeliveryFee
   const isMinOrderSatisfied = subtotal >= minOrderAmount
 
+  // Restoranning haqiqiy yetkazib berish hududlari — /partner/{uuid}/ dan
+  // (getStoreItemCategories emas, faqat getRestaurantDetail shu ma'lumotni beradi).
+  const deliveryZones = (restaurantData as any)?.delivery_zones
+  const isInDeliveryZone =
+    !selectedCoords || isPointInDeliveryZones(selectedCoords[0], selectedCoords[1], deliveryZones)
+
   const handleCreateOrder = () => {
     if (!isAuthenticated) {
       openLogin?.()
@@ -108,6 +115,10 @@ const CartFullPage = () => {
     if (!selectedCoords) {
       message.warning('Iltimos, yetkazib berish manzilini tanlang.')
       setIsLocationModalOpen(true)
+      return
+    }
+    if (!isInDeliveryZone) {
+      message.error('Kechirasiz, bu hamkor tanlangan manzilingizga yetkazib bermaydi.')
       return
     }
     if (!isMinOrderSatisfied) {
@@ -119,6 +130,14 @@ const CartFullPage = () => {
   }
 
   const handleConfirmOrder = async () => {
+    // Oxirgi, hech qanday holatda aylanib o'tib bo'lmaydigan tekshiruv —
+    // buyurtma backend'ga yuborilishidan oldin.
+    if (!selectedCoords || !isInDeliveryZone) {
+      message.error('Kechirasiz, bu hamkor tanlangan manzilingizga yetkazib bermaydi.')
+      setIsConfirmModalOpen(false)
+      return
+    }
+
     const activeStoreId =
       (querySlug as string) || Object.keys(carts).find((id) => (carts[id].items?.length || 0) > 0)
     if (!activeStoreId) return
@@ -292,9 +311,10 @@ const CartFullPage = () => {
               </div>
             </div>
 
-            {/* Minimum order amount warning */}
-            {!isMinOrderSatisfied && (
-              <div className="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 p-2.5 text-[12px] font-semibold text-amber-800">
+            {/* Out-of-delivery-zone warning (checked first — no point showing the
+                min-order nag if the order couldn't be delivered anyway) */}
+            {selectedCoords && !isInDeliveryZone ? (
+              <div className="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 p-2.5 text-[12px] font-semibold text-red-800">
                 <svg
                   width="14"
                   height="14"
@@ -308,32 +328,55 @@ const CartFullPage = () => {
                   <line x1="12" y1="8" x2="12" y2="12" />
                   <line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
-                <span>
-                  Eng kam buyurtma miqdori {fmt(minOrderAmount)} UZS. Yana{' '}
-                  {fmt(minOrderAmount - subtotal)} UZSlik mahsulot qo'shing.
-                </span>
+                <span>Kechirasiz, bu hamkor tanlangan manzilingizga yetkazib bermaydi.</span>
               </div>
+            ) : (
+              !isMinOrderSatisfied && (
+                <div className="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 p-2.5 text-[12px] font-semibold text-amber-800">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    className="mt-0.5 flex-shrink-0"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  <span>
+                    Eng kam buyurtma miqdori {fmt(minOrderAmount)} UZS. Yana{' '}
+                    {fmt(minOrderAmount - subtotal)} UZSlik mahsulot qo'shing.
+                  </span>
+                </div>
+              )
             )}
 
             <button
               onClick={handleCreateOrder}
-              disabled={orderLoading || !isMinOrderSatisfied}
+              disabled={
+                orderLoading || !isMinOrderSatisfied || (!!selectedCoords && !isInDeliveryZone)
+              }
               className={`py-4.5 flex w-full items-center justify-center gap-4 rounded-[24px] border-b-4 shadow-[0_12px_30px_rgba(255,214,0,0.35)] transition-all active:scale-[0.96] ${
-                isMinOrderSatisfied
+                isMinOrderSatisfied && isInDeliveryZone
                   ? 'border-[#E6C000] bg-[#FFD600]'
                   : 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
               }`}
             >
               <span
-                className={`text-[18px] font-black ${isMinOrderSatisfied ? 'text-black' : 'text-gray-400'}`}
+                className={`text-[18px] font-black ${isMinOrderSatisfied && isInDeliveryZone ? 'text-black' : 'text-gray-400'}`}
               >
                 {orderLoading
                   ? 'YUBORILMOQDA...'
-                  : isMinOrderSatisfied
-                    ? 'BUYURTMA BERISH'
-                    : `ENG KAM BUYURTMA: ${fmt(minOrderAmount)} UZS`}
+                  : selectedCoords && !isInDeliveryZone
+                    ? 'YETKAZIB BERISH MUMKIN EMAS'
+                    : isMinOrderSatisfied
+                      ? 'BUYURTMA BERISH'
+                      : `ENG KAM BUYURTMA: ${fmt(minOrderAmount)} UZS`}
               </span>
-              {!orderLoading && isMinOrderSatisfied && (
+              {!orderLoading && isMinOrderSatisfied && isInDeliveryZone && (
                 <div className="rounded-full bg-black/5 p-1.5">
                   <svg
                     width="20"
@@ -402,7 +445,7 @@ const CartFullPage = () => {
           <div className="flex flex-col gap-3">
             <button
               onClick={handleConfirmOrder}
-              disabled={orderLoading}
+              disabled={orderLoading || !isInDeliveryZone}
               className="flex w-full items-center justify-center gap-3 rounded-[20px] border-b-4 border-[#E6C000] bg-[#FFD600] py-4 shadow-[0_8px_20px_rgba(255,214,0,0.25)] transition-all active:scale-[0.98]"
             >
               <span className="text-[17px] font-black text-black">

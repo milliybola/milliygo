@@ -207,6 +207,51 @@ const CHeader = () => {
       style={{ padding: 0, height: 'auto', background: 'transparent' }}
       className="sticky top-0 z-50 w-full"
     >
+      {/* ── Mobile Header: logo + selected location + search, single row ── */}
+      <div
+        className={`relative border-b border-[#efefed] bg-white/95 backdrop-blur-md transition-shadow duration-300 lg:hidden ${
+          scrolled ? 'shadow-[0_4px_20px_rgba(0,0,0,0.05)]' : ''
+        }`}
+      >
+        <div
+          className="flex items-center gap-2.5 px-4 pb-3"
+          style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}
+        >
+          <Link href="/" className="flex-shrink-0 transition-transform active:scale-90">
+            <Image
+              src={logo}
+              alt="MilliyGo"
+              width={36}
+              height={36}
+              className="rounded-xl object-contain shadow-sm ring-1 ring-[#C5A059]/25"
+            />
+          </Link>
+
+          {/* Selected location — the primary action, tap to choose */}
+          <button
+            onClick={() => setIsLocationModalOpen(true)}
+            className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-2xl border border-[#eee] bg-[#F8F8F8] px-3 text-left transition-all active:scale-[0.98] active:bg-[#F0F0F0]"
+          >
+            <EnvironmentOutlined className="flex-shrink-0 text-[15px] text-[#008080]" />
+            <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-[#111]">
+              {location?.address || 'Manzilni tanlang'}
+            </span>
+            <DownOutlined className="flex-shrink-0 text-[8px] text-[#bbb]" />
+          </button>
+
+          <button
+            onClick={() => router.push('/search')}
+            aria-label="Qidirish"
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-[#eee] bg-[#F8F8F8] transition-all active:scale-90 active:bg-[#F0F0F0]"
+          >
+            <SearchOutlined className="text-[16px] text-[#555]" />
+          </button>
+        </div>
+
+        {/* Signature ikat accent */}
+        <div className="milliy-ikat-strip h-[2.5px] w-full opacity-80" />
+      </div>
+
       {/* ── Milliy-Classic Top Bar ── */}
       <div className="relative hidden w-full overflow-hidden border-b border-[#E5E7EB] bg-[#FAF9F6] lg:block">
         <div className="milliy-pattern-bg pointer-events-none absolute inset-0 opacity-[0.06]" />
@@ -275,9 +320,9 @@ const CHeader = () => {
         </div>
       </div>
 
-      {/* ── Main NavBar ── */}
+      {/* ── Main NavBar (desktop/tablet only — mobile has its own header above) ── */}
       <div
-        className={`relative w-full bg-white transition-all duration-300 ${
+        className={`relative hidden w-full bg-white transition-all duration-300 lg:block ${
           scrolled ? 'shadow-[0_1px_24px_rgba(0,0,0,0.07)]' : 'border-b border-[#efefed]'
         }`}
       >
@@ -560,24 +605,6 @@ const CHeader = () => {
               </div>
             </div>
           </div>
-
-          {/* Mobile search - Hidden on Home page fixed search */}
-          {router.pathname !== '/' && (
-            <div className="pb-3 lg:hidden">
-              <div
-                onClick={() => router.push('/search')}
-                className="flex cursor-pointer items-center rounded-2xl bg-[#f5f4f1] px-4 py-[10px] transition-all duration-200"
-              >
-                <SearchOutlined className="mr-3 flex-shrink-0 text-[14px] text-[#bbb]" />
-                <input
-                  type="text"
-                  placeholder="Nima buyurtma qilamiz?"
-                  readOnly
-                  className="w-full cursor-pointer border-none bg-transparent text-[13.5px] font-[450] text-[#111] placeholder-[#bbb] outline-none"
-                />
-              </div>
-            </div>
-          )}
         </div>
         {/* Colorful Ikat Strip — signature Milliy accent under the navbar */}
         <div className="milliy-ikat-strip h-[4px] w-full" />

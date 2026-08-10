@@ -182,6 +182,16 @@ export interface IEvents {
   organizer: string
 }
 
+export interface IDeliveryZone {
+  uuid: string
+  name: string
+  district?: string
+  delivery_fee?: number | null
+  estimated_minutes?: number | null
+  center?: [number, number]
+  coordinates: number[][][]
+}
+
 export interface IPartner {
   id: number
   uuid: string
@@ -201,6 +211,7 @@ export interface IPartner {
   location_long?: number
   is_open?: boolean
   partner_type?: string
+  delivery_zones?: IDeliveryZone[]
 }
 
 export interface IPartnerResponse {

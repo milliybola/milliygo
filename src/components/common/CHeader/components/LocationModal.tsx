@@ -713,6 +713,7 @@ const LocationModal: React.FC<LocationModalProps> = (props) => {
       width={1000}
       centered
       className="location-modal"
+      wrapClassName="location-modal-wrap"
       styles={{ body: { padding: '24px' } }}
     >
       <YMaps query={{ apikey: YANDEX_API_KEY, lang: 'uz_UZ' as any }}>
@@ -746,6 +747,15 @@ const LocationModal: React.FC<LocationModalProps> = (props) => {
            viewport height with no internal scroll, so the map often ended
            up pushed off-screen. */
         @media (max-width: 767px) {
+          /* The wrap is antd's own overlay/backdrop container — it defaults
+             to overflow:auto so a tall modal can be scrolled as a whole.
+             That's exactly what caused the "whole modal scrolls" bug: once
+             locked, ALL scrolling must happen inside the panels below. */
+          .location-modal-wrap {
+            overflow: hidden !important;
+            position: fixed !important;
+            inset: 0 !important;
+          }
           .location-modal.ant-modal {
             top: 0 !important;
             width: 100vw !important;
@@ -754,7 +764,10 @@ const LocationModal: React.FC<LocationModalProps> = (props) => {
             padding-bottom: 0 !important;
           }
           .location-modal .ant-modal-content {
+            height: 100vh;
             height: 100dvh;
+            max-height: 100vh;
+            max-height: 100dvh;
             border-radius: 0 !important;
             display: flex;
             flex-direction: column;

@@ -12,6 +12,7 @@ import {
   CheckCircleFilled,
 } from '@ant-design/icons'
 import { useLocationStore } from '@/store/useLocationStore'
+import { isPointInDeliveryZones } from '@/helpers/location-helper'
 import LocationModal from '@/components/common/CHeader/components/LocationModal'
 import dayjs from 'dayjs'
 
@@ -103,6 +104,13 @@ const StoreItemCart = ({
   const total = subtotal + activeDeliveryFee
   const isMinOrderSatisfied = subtotal >= minOrderAmount
 
+  // Faqat customLogic o'tkazilmagan (standalone) holatlar uchun — bu yerda
+  // hali tekshirilmagan bo'lishi mumkin, shu sabab bu komponent ham o'z
+  // ichida yakuniy tekshiruvni bajaradi.
+  const deliveryZones = (restaurantData as any)?.delivery_zones
+  const isInDeliveryZone =
+    !selectedCoords || isPointInDeliveryZones(selectedCoords[0], selectedCoords[1], deliveryZones)
+
   const fmt = (n: number) => n.toLocaleString('uz-UZ').replace(/,/g, ' ')
 
   const handleCreateOrder =
@@ -115,6 +123,10 @@ const StoreItemCart = ({
       if (!selectedCoords) {
         message.warning('Iltimos, yetkazib berish manzilini tanlang.')
         setIsLocationModalOpen(true)
+        return
+      }
+      if (!isInDeliveryZone) {
+        message.error('Kechirasiz, bu hamkor tanlangan manzilingizga yetkazib bermaydi.')
         return
       }
 
@@ -268,9 +280,9 @@ const StoreItemCart = ({
             </div>
           </div>
 
-          {/* Minimum order amount warning */}
-          {!isMinOrderSatisfied && (
-            <div className="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 p-2.5 text-[12px] font-semibold text-amber-800">
+          {/* Out-of-delivery-zone warning takes priority over the min-order nag */}
+          {selectedCoords && !isInDeliveryZone ? (
+            <div className="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 p-2.5 text-[12px] font-semibold text-red-800">
               <svg
                 width="14"
                 height="14"
@@ -284,27 +296,56 @@ const StoreItemCart = ({
                 <line x1="12" y1="8" x2="12" y2="12" />
                 <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
-              <span>
-                Eng kam buyurtma miqdori {fmt(minOrderAmount)} UZS. Yana{' '}
-                {fmt(minOrderAmount - subtotal)} UZSlik mahsulot qo'shing.
-              </span>
+              <span>Kechirasiz, bu hamkor tanlangan manzilingizga yetkazib bermaydi.</span>
             </div>
+          ) : (
+            !isMinOrderSatisfied && (
+              <div className="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 p-2.5 text-[12px] font-semibold text-amber-800">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className="mt-0.5 flex-shrink-0"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <span>
+                  Eng kam buyurtma miqdori {fmt(minOrderAmount)} UZS. Yana{' '}
+                  {fmt(minOrderAmount - subtotal)} UZSlik mahsulot qo'shing.
+                </span>
+              </div>
+            )
           )}
 
           <button
             onClick={handleCreateOrder}
-            disabled={subtotal === 0 || loading || !isMinOrderSatisfied}
+            disabled={
+              subtotal === 0 ||
+              loading ||
+              !isMinOrderSatisfied ||
+              (!!selectedCoords && !isInDeliveryZone)
+            }
             className={`py-4.5 flex h-[58px] w-full items-center justify-center rounded-[20px] text-[17px] font-bold shadow-[0_8px_20px_rgba(255,214,0,0.25)] transition-all ${
-              subtotal === 0 || loading || !isMinOrderSatisfied
+              subtotal === 0 ||
+              loading ||
+              !isMinOrderSatisfied ||
+              (!!selectedCoords && !isInDeliveryZone)
                 ? 'cursor-not-allowed bg-gray-200 text-gray-400 opacity-60'
                 : 'bg-[#FFD600] text-gray-900 hover:bg-[#FFC800] active:scale-[0.98]'
             }`}
           >
             {loading
               ? 'Yuborilmoqda...'
-              : isMinOrderSatisfied
-                ? 'Buyurtma berish'
-                : `Eng kam buyurtma: ${fmt(minOrderAmount)} UZS`}
+              : selectedCoords && !isInDeliveryZone
+                ? 'Yetkazib berish mumkin emas'
+                : isMinOrderSatisfied
+                  ? 'Buyurtma berish'
+                  : `Eng kam buyurtma: ${fmt(minOrderAmount)} UZS`}
           </button>
           <p className="mt-3 px-2 text-center text-[12px] leading-normal text-gray-400">
             Buyurtma berish orqali siz{' '}

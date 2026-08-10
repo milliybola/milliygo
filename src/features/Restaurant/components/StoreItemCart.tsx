@@ -2,6 +2,9 @@ import { useRouter } from 'next/router'
 import { useCartStore } from '@/store/cartStore'
 import { useContext } from 'react'
 import { AuthContext } from '@/features/Account/auth/context/authContext'
+import { message } from 'antd'
+import { useLocationStore } from '@/store/useLocationStore'
+import { isPointInDeliveryZones } from '@/helpers/location-helper'
 import { useQuery } from '@tanstack/react-query'
 import { getStoreItemCategories } from '../api'
 
@@ -27,6 +30,10 @@ const StoreItemCart = ({
   const authContext = useContext(AuthContext) as any
   const openLogin = authContext?.openLogin
   const isAuthenticated = authContext?.authStore?.isAuthenticated
+
+  const { location } = useLocationStore()
+  const isInDeliveryZone =
+    !location || isPointInDeliveryZones(location.lat, location.lng, restaurantData?.delivery_zones)
 
   const { data: categoriesData } = useQuery({
     queryKey: ['item-base-categories', slug],
@@ -184,9 +191,9 @@ const StoreItemCart = ({
             </svg>
           </div>
 
-          {/* Minimum order amount warning */}
-          {subtotal > 0 && !isMinOrderSatisfied && (
-            <div className="mx-4 mb-3 flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 p-2.5 text-[12px] font-semibold text-amber-800">
+          {/* Out-of-delivery-zone warning takes priority over the min-order nag */}
+          {!isInDeliveryZone ? (
+            <div className="mx-4 mb-3 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 p-2.5 text-[12px] font-semibold text-red-800">
               <svg
                 width="14"
                 height="14"
@@ -200,17 +207,43 @@ const StoreItemCart = ({
                 <line x1="12" y1="8" x2="12" y2="12" />
                 <line x1="12" y1="16" x2="12.01" y2="16" />
               </svg>
-              <span>
-                Eng kam buyurtma miqdori {fmt(minOrderAmount)}. Yana{' '}
-                {fmt(minOrderAmount - subtotal)}lik mahsulot qo'shing.
-              </span>
+              <span>Kechirasiz, bu hamkor tanlangan manzilingizga yetkazib bermaydi.</span>
             </div>
+          ) : (
+            subtotal > 0 &&
+            !isMinOrderSatisfied && (
+              <div className="mx-4 mb-3 flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50 p-2.5 text-[12px] font-semibold text-amber-800">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className="mt-0.5 flex-shrink-0"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                <span>
+                  Eng kam buyurtma miqdori {fmt(minOrderAmount)}. Yana{' '}
+                  {fmt(minOrderAmount - subtotal)}lik mahsulot qo'shing.
+                </span>
+              </div>
+            )
           )}
 
           <div className="px-4 pb-4">
             <button
-              disabled={!isMinOrderSatisfied}
+              disabled={!isMinOrderSatisfied || !isInDeliveryZone}
               onClick={() => {
+                if (!isInDeliveryZone) {
+                  message.warning(
+                    'Kechirasiz, bu hamkor tanlangan manzilingizga yetkazib bermaydi.'
+                  )
+                  return
+                }
                 if (isAuthenticated) {
                   router.push(`/cart?store=${storeId}`)
                 } else {
@@ -218,15 +251,21 @@ const StoreItemCart = ({
                 }
               }}
               className={`flex w-full items-center justify-between rounded-2xl px-5 py-3.5 shadow-sm transition-all active:scale-[0.98] ${
-                isMinOrderSatisfied
+                isMinOrderSatisfied && isInDeliveryZone
                   ? 'bg-[#FFD600] font-bold text-gray-900 hover:bg-[#FFC800]'
                   : 'cursor-not-allowed bg-gray-100 font-bold text-gray-400'
               }`}
             >
               <span className="text-[15px]">
-                {isMinOrderSatisfied ? 'Davom etish' : `Eng kam buyurtma: ${fmt(minOrderAmount)}`}
+                {!isInDeliveryZone
+                  ? 'Yetkazib berish mumkin emas'
+                  : isMinOrderSatisfied
+                    ? 'Davom etish'
+                    : `Eng kam buyurtma: ${fmt(minOrderAmount)}`}
               </span>
-              {isMinOrderSatisfied && <span className="text-[15px]">{fmt(total)}</span>}
+              {isMinOrderSatisfied && isInDeliveryZone && (
+                <span className="text-[15px]">{fmt(total)}</span>
+              )}
             </button>
           </div>
         </>

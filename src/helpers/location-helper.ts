@@ -27,3 +27,26 @@ export const checkServiceArea = (lat: number, lng: number) => {
   // Constants are [Lng, Lat], our input is [Lat, Lng]
   return isPointInPolygon([lng, lat], SERVICE_AREA)
 }
+
+/**
+ * Checks whether a point falls inside any of a partner's delivery zones.
+ * Each zone's `coordinates` follows the GeoJSON Polygon shape
+ * (rings of [lng, lat] points — first ring is the outer boundary).
+ *
+ * Partners without any zones configured are treated as deliverable
+ * everywhere, rather than hidden — missing zone data is far more likely
+ * to be an incomplete backend setup than an intentional "delivers nowhere".
+ */
+export const isPointInDeliveryZones = (
+  lat: number,
+  lng: number,
+  zones?: { coordinates?: number[][][] }[] | null
+): boolean => {
+  if (!zones || zones.length === 0) return true
+
+  return zones.some((zone) => {
+    const outerRing = zone?.coordinates?.[0]
+    if (!outerRing || outerRing.length < 3) return false
+    return isPointInPolygon([lng, lat], outerRing)
+  })
+}

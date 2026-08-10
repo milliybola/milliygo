@@ -7,6 +7,8 @@ import { LeftOutlined, RightOutlined } from '@ant-design/icons'
 import { getRestaurantsList } from '../../api'
 import { useRouter } from 'next/router'
 import StarIcon from '@/components/icons/star'
+import { useLocationStore } from '@/store/useLocationStore'
+import { isPointInDeliveryZones } from '@/helpers/location-helper'
 
 const LightningIcon = () => (
   <svg width="12" height="12" viewBox="0 0 24 24" fill="#F59E0B" xmlns="http://www.w3.org/2000/svg">
@@ -168,6 +170,7 @@ import SkeletonCard from '@/components/common/SkeletonCard'
 function StoreList() {
   const carouselRef = useRef<any>(null)
   const router = useRouter()
+  const { location } = useLocationStore()
 
   const { data, isLoading } = useQuery({
     queryKey: ['restaurant-list'],
@@ -243,6 +246,10 @@ function StoreList() {
               {restaurants.map((val: any, i: number) => {
                 const secureImage = val?.banner?.replace('http://', 'https://')
                 const status = getStoreStatus(val)
+                const isDeliverable =
+                  !location ||
+                  isPointInDeliveryZones(location.lat, location.lng, val?.delivery_zones)
+                const isBlocked = !status.isOpen || !isDeliverable
 
                 return (
                   <Link
@@ -252,9 +259,12 @@ function StoreList() {
                       if (!status.isOpen) {
                         e.preventDefault()
                         message.warning("Bu do'kon hozir yopiq")
+                      } else if (!isDeliverable) {
+                        e.preventDefault()
+                        message.warning("Bu do'kon sizning hududingizga yetkazib bermaydi")
                       }
                     }}
-                    className={`flex w-[240px] shrink-0 flex-col gap-3 ${!status.isOpen ? 'cursor-not-allowed' : ''}`}
+                    className={`flex w-[240px] shrink-0 flex-col gap-3 ${isBlocked ? 'cursor-not-allowed' : ''}`}
                   >
                     <div className="premium-card relative h-[160px] w-full overflow-hidden">
                       {secureImage ? (
@@ -262,7 +272,7 @@ function StoreList() {
                           src={secureImage}
                           alt={val?.name}
                           className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-                            !status.isOpen ? 'contrast-[85%] grayscale-[50%]' : ''
+                            isBlocked ? 'contrast-[85%] grayscale-[50%]' : ''
                           }`}
                         />
                       ) : (
@@ -280,6 +290,15 @@ function StoreList() {
                               Ish vaqti: {status.timeRange}
                             </span>
                           )}
+                        </div>
+                      )}
+
+                      {/* Out-of-delivery-zone overlay */}
+                      {status.isOpen && !isDeliverable && (
+                        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 px-2 text-center backdrop-blur-[1.5px]">
+                          <span className="rounded-full bg-[#F59E0B] px-3 py-1 text-[12px] font-extrabold uppercase tracking-wider text-white shadow-lg">
+                            Hududingizga yetkazmaydi
+                          </span>
                         </div>
                       )}
 
@@ -353,6 +372,10 @@ function StoreList() {
                         {group.map((val: any, i: number) => {
                           const secureImage = val?.banner?.replace('http://', 'https://')
                           const status = getStoreStatus(val)
+                          const isDeliverable =
+                            !location ||
+                            isPointInDeliveryZones(location.lat, location.lng, val?.delivery_zones)
+                          const isBlocked = !status.isOpen || !isDeliverable
 
                           return (
                             <Link
@@ -362,9 +385,14 @@ function StoreList() {
                                 if (!status.isOpen) {
                                   e.preventDefault()
                                   message.warning("Bu do'kon hozir yopiq")
+                                } else if (!isDeliverable) {
+                                  e.preventDefault()
+                                  message.warning(
+                                    "Bu do'kon sizning hududingizga yetkazib bermaydi"
+                                  )
                                 }
                               }}
-                              className={`group flex flex-col gap-3 ${!status.isOpen ? 'cursor-not-allowed' : ''}`}
+                              className={`group flex flex-col gap-3 ${isBlocked ? 'cursor-not-allowed' : ''}`}
                             >
                               <div className="premium-card group relative h-[200px] w-full overflow-hidden">
                                 {secureImage ? (
@@ -372,7 +400,7 @@ function StoreList() {
                                     src={secureImage}
                                     alt={val?.name}
                                     className={`h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 ${
-                                      !status.isOpen ? 'contrast-[85%] grayscale-[50%]' : ''
+                                      isBlocked ? 'contrast-[85%] grayscale-[50%]' : ''
                                     }`}
                                   />
                                 ) : (
@@ -390,6 +418,15 @@ function StoreList() {
                                         Ish vaqti: {status.timeRange}
                                       </span>
                                     )}
+                                  </div>
+                                )}
+
+                                {/* Out-of-delivery-zone overlay */}
+                                {status.isOpen && !isDeliverable && (
+                                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 px-3 text-center backdrop-blur-[1.5px]">
+                                    <span className="rounded-full bg-[#F59E0B] px-3.5 py-1.5 text-[13px] font-extrabold uppercase tracking-wider text-white shadow-lg">
+                                      Hududingizga yetkazmaydi
+                                    </span>
                                   </div>
                                 )}
                               </div>
