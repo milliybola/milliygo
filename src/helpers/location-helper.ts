@@ -23,8 +23,35 @@ export const isPointInPolygon = (point: [number, number], polygon: number[][]) =
   return inside
 }
 
-export const checkServiceArea = (lat: number, lng: number) => {
-  // Constants are [Lng, Lat], our input is [Lat, Lng]
+/**
+ * Checks whether a point falls inside any of the real neighborhoods
+ * (mahalla) polygons fetched from /locations/neighborhoods/.
+ */
+export const isPointInNeighborhoods = (
+  lat: number,
+  lng: number,
+  neighborhoods?: { coordinates?: number[][][] }[] | null
+): boolean => {
+  if (!neighborhoods || neighborhoods.length === 0) return false
+
+  return neighborhoods.some((n) => {
+    const outerRing = n?.coordinates?.[0]
+    if (!outerRing || outerRing.length < 3) return false
+    return isPointInPolygon([lng, lat], outerRing)
+  })
+}
+
+export const checkServiceArea = (
+  lat: number,
+  lng: number,
+  neighborhoods?: { coordinates?: number[][][] }[] | null
+) => {
+  // Haqiqiy mahalla chegaralari yuklangan bo'lsa — shulardan foydalanamiz.
+  // Hali yuklanmagan yoki so'rov muvaffaqiyatsiz bo'lsa — eski statik
+  // chegaradan (SERVICE_AREA) zaxira sifatida foydalanamiz.
+  if (neighborhoods && neighborhoods.length > 0) {
+    return isPointInNeighborhoods(lat, lng, neighborhoods)
+  }
   return isPointInPolygon([lng, lat], SERVICE_AREA)
 }
 

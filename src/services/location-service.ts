@@ -27,6 +27,26 @@ export interface PopularLocationsResponse {
   }
 }
 
+export interface Neighborhood {
+  uuid: string
+  name: string
+  district: string
+  // Backenddagi kabi [Lat, Lng] tartibida.
+  center: [number, number]
+  // GeoJSON Polygon uzuklari — [Lng, Lat] tartibida (birinchi uzuk = tashqi chegara).
+  coordinates: number[][][]
+  order: number
+}
+
+export interface NeighborhoodsResponse {
+  success: boolean
+  data: {
+    count: number
+    districts: string[]
+    neighborhoods: Neighborhood[]
+  }
+}
+
 export const LocationService = {
   getPopularLocations: async (params?: {
     search?: string
@@ -40,6 +60,13 @@ export const LocationService = {
     })
   },
 
+  getNeighborhoods: async (): Promise<NeighborhoodsResponse> => {
+    return request({
+      url: '/locations/neighborhoods/',
+      method: 'get',
+    })
+  },
+
   reverseGeocode: async (lat: number, lng: number): Promise<string> => {
     try {
       const response = await axios.get(
@@ -49,12 +76,15 @@ export const LocationService = {
       if (featureMember) {
         const geoObject = featureMember.GeoObject
         const metaData = geoObject.metaDataProperty.GeocoderMetaData
-        return metaData.text || geoObject.name + (geoObject.description ? ', ' + geoObject.description : '')
+        return (
+          metaData.text ||
+          geoObject.name + (geoObject.description ? ', ' + geoObject.description : '')
+        )
       }
-      return 'Noma\'lum manzil'
+      return "Noma'lum manzil"
     } catch (error) {
       console.error('Geocoding error:', error)
-      return 'Manzilni aniqlab bo\'lmadi'
+      return "Manzilni aniqlab bo'lmadi"
     }
   },
 
@@ -77,5 +107,5 @@ export const LocationService = {
       console.error('Search error:', error)
       return []
     }
-  }
+  },
 }

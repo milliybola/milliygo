@@ -22,6 +22,7 @@ import {
 import { SERVICE_AREA, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/constants/location'
 import { checkServiceArea } from '@/helpers/location-helper'
 import { useLocationStore } from '@/store/useLocationStore'
+import { useNeighborhoods } from '@/hooks/useNeighborhoods'
 import { LocationService, YandexAddressOption, PopularLocation } from '@/services/location-service'
 import { YANDEX_API_KEY } from '@/constants/api-keys'
 
@@ -38,13 +39,14 @@ const TASHKENT_BOUNDS: [[number, number], [number, number]] = [
 const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) => {
   const { location, setLocation, setIsInServiceArea } = useLocationStore()
   const ymaps = useYMaps(['geocode'])
+  const { neighborhoods } = useNeighborhoods()
 
   const [tempCoords, setTempCoords] = useState<[number, number]>(
     location ? [location.lat, location.lng] : (DEFAULT_MAP_CENTER as [number, number])
   )
   const [address, setAddress] = useState<string>(location?.address || '')
   const [isValid, setIsValid] = useState<boolean>(
-    location ? checkServiceArea(location.lat, location.lng) : false
+    location ? checkServiceArea(location.lat, location.lng, neighborhoods) : false
   )
   const [loading, setLoading] = useState<boolean>(false)
   const [options, setOptions] = useState<YandexAddressOption[]>([])
@@ -157,7 +159,7 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
     const coords: [number, number] = [lat, lng]
     setTempCoords(coords)
     setAddress(loc.name + ' (' + loc.address + ')')
-    setIsValid(checkServiceArea(lat, lng))
+    setIsValid(checkServiceArea(lat, lng, neighborhoods))
     setShowPopularList(false)
     setSearchQuery('')
   }
@@ -166,13 +168,13 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
     const coords = opt.coords
     setTempCoords(coords)
     setAddress(opt.label)
-    setIsValid(checkServiceArea(coords[0], coords[1]))
+    setIsValid(checkServiceArea(coords[0], coords[1], neighborhoods))
   }
 
   const handleMapClick = useCallback(
     async (e: any) => {
       const coords = e.get('coords') as [number, number]
-      const inArea = checkServiceArea(coords[0], coords[1])
+      const inArea = checkServiceArea(coords[0], coords[1], neighborhoods)
 
       setTempCoords(coords)
       setIsValid(inArea)
@@ -186,7 +188,7 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
         message.warning('Tanlangan hudud xizmat doirasidan tashqarida')
       }
     },
-    [ymaps]
+    [ymaps, neighborhoods]
   )
 
   const handleConfirm = () => {
@@ -211,7 +213,7 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
       async ({ coords: { latitude, longitude } }) => {
         const coords: [number, number] = [latitude, longitude]
         setTempCoords(coords)
-        setIsValid(checkServiceArea(latitude, longitude))
+        setIsValid(checkServiceArea(latitude, longitude, neighborhoods))
         const addr = await geocodeCoords(latitude, longitude)
         setAddress(addr)
         setLoading(false)
@@ -248,9 +250,9 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
     if (open && location) {
       setTempCoords([location.lat, location.lng])
       setAddress(location.address || '')
-      setIsValid(checkServiceArea(location.lat, location.lng))
+      setIsValid(checkServiceArea(location.lat, location.lng, neighborhoods))
     }
-  }, [open, location])
+  }, [open, location, neighborhoods])
 
   // Yandex Maps measures its container once at init time. Since it's mounted
   // inside an animated antd Modal, that first measurement can happen mid
@@ -288,17 +290,32 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
         options={{ suppressMapOpenBlock: true }}
         instanceRef={(ref: any) => ref && setMapInstance(ref)}
       >
-        <Polygon
-          geometry={[SERVICE_AREA.map((p) => [p[1], p[0]])]}
-          onClick={handleMapClick}
-          options={{
-            fillColor: 'rgba(197, 160, 89, 0.08)',
-            strokeColor: '#C5A059',
-            strokeOpacity: 0.8,
-            strokeWidth: 2,
-            fillOpacity: 1,
-          }}
-        />
+        {/* Har bir mahalla — /locations/neighborhoods/ dan kelgan haqiqiy
+            chegaralar. API hali yuklanmagan yoki bo'sh qaytarsa, eski statik
+            chegara (SERVICE_AREA) zaxira sifatida ko'rsatiladi. */}
+        {(neighborhoods.length > 0
+          ? neighborhoods.map((n) => ({
+              key: n.uuid,
+              // coordinates ring'lari [Lng, Lat] — Yandex esa [Lat, Lng] kutadi.
+              ring: n.coordinates?.[0]?.map((p) => [p[1], p[0]]) || [],
+            }))
+          : [{ key: 'fallback', ring: SERVICE_AREA.map((p) => [p[1], p[0]]) }]
+        )
+          .filter((zone) => zone.ring.length >= 3)
+          .map((zone) => (
+            <Polygon
+              key={zone.key}
+              geometry={[zone.ring]}
+              onClick={handleMapClick}
+              options={{
+                fillColor: 'rgba(197, 160, 89, 0.08)',
+                strokeColor: '#C5A059',
+                strokeOpacity: 0.8,
+                strokeWidth: 2,
+                fillOpacity: 1,
+              }}
+            />
+          ))}
 
         <Placemark
           geometry={tempCoords}

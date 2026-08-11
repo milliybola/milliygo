@@ -28,6 +28,7 @@ import HeaderMenuDrawer from './components/ResponsiveDrawer'
 import LocationModal from './components/LocationModal'
 import { useLocationStore } from '@/store/useLocationStore'
 import { checkServiceArea } from '@/helpers/location-helper'
+import { useNeighborhoods } from '@/hooks/useNeighborhoods'
 import dayjs from 'dayjs'
 import 'dayjs/locale/ar'
 import 'dayjs/locale/az'
@@ -140,6 +141,7 @@ const CHeader = () => {
   const { location, setLocation, setIsInServiceArea } = useLocationStore()
   const ymaps = useYMaps(['geocode'])
   const { info: applicationInfo } = useApplicationInfo()
+  const { neighborhoods, isLoading: neighborhoodsLoading } = useNeighborhoods()
 
   useEffect(() => {
     setIsSignedIn(isAuthenticated)
@@ -160,14 +162,16 @@ const CHeader = () => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Geolocation check on mount
+  // Geolocation check on mount — waits for the real neighborhood boundaries
+  // to load first, so the very first check doesn't rely on the stale
+  // static fallback polygon.
   useEffect(() => {
-    if (!location && ymaps) {
+    if (!location && ymaps && !neighborhoodsLoading) {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
             const { latitude, longitude } = position.coords
-            const inArea = checkServiceArea(latitude, longitude)
+            const inArea = checkServiceArea(latitude, longitude, neighborhoods)
 
             if (inArea) {
               try {
@@ -200,7 +204,7 @@ const CHeader = () => {
         setIsLocationModalOpen(true)
       }
     }
-  }, [location, setLocation, setIsInServiceArea, ymaps])
+  }, [location, setLocation, setIsInServiceArea, ymaps, neighborhoods, neighborhoodsLoading])
 
   return (
     <Layout.Header
