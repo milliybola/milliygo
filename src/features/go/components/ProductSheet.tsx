@@ -1,6 +1,7 @@
 import { message } from 'antd'
 import { useEffect, useState } from 'react'
 import { productLine, setLine, useCart } from '../lib/cart'
+import { useRequireLocation } from '../lib/session'
 import type { Partner, Product, ProductSet } from '../lib/types'
 import { dealLabel, freeCount, som } from '../lib/utils'
 import { IconClose, IconGift, IconMinus, IconPlus } from '../ui/icons'
@@ -32,6 +33,7 @@ export default function ProductSheet({
     line ? s.carts[partner.uuid]?.lines.find((l) => l.key === line.key)?.quantity || 0 : 0
   )
   const setQty = useCart((s) => s.setQty)
+  const requireLocation = useRequireLocation()
   const [qty, setLocal] = useState(1)
 
   useEffect(() => {
@@ -56,6 +58,7 @@ export default function ProductSheet({
   const others = suggestions.filter((s) => s.uuid !== product?.uuid && s.is_available).slice(0, 6)
 
   const add = () => {
+    if (!closed && !requireLocation()) return
     if (closed) {
       message.info("Muassasa hozir yopiq — savatga qo'shib bo'lmaydi")
       return

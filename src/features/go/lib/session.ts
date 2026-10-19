@@ -1,3 +1,4 @@
+import { message } from 'antd'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { setCookie } from 'cookies-next'
 import { useContext, useSyncExternalStore } from 'react'
@@ -120,5 +121,17 @@ export function useUserLocation() {
     address: loc?.address ?? null,
     hasLocation: !!loc,
     inServiceArea: hydrated ? inArea : false,
+  }
+}
+
+/** Manzil tanlanmagan bo'lsa — savatga qo'shishga yo'l qo'ymaydi: ogohlantiradi va manzil tanlash oynasini ochadi */
+export function useRequireLocation() {
+  const { hasLocation } = useUserLocation()
+  const setOpen = useUi((s) => s.setLocationOpen)
+  return () => {
+    if (hasLocation) return true
+    message.warning('Avval yetkazib berish manzilini tanlang')
+    setOpen(true)
+    return false
   }
 }

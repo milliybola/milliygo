@@ -7,7 +7,7 @@ import { fetchPartner, fetchPartners } from '../lib/api'
 import { productLine, useCart } from '../lib/cart'
 import { normalizeProduct } from '../lib/normalize'
 import { useOrders } from '../lib/queries'
-import { useSession } from '../lib/session'
+import { useRequireLocation, useSession } from '../lib/session'
 import { isOrderActive, orderNumber, orderStatus } from '../lib/status'
 import type { Order, Partner } from '../lib/types'
 import { cx, som } from '../lib/utils'
@@ -521,7 +521,9 @@ export default function OrdersPage() {
     [filtered, newestFirst]
   )
 
+  const requireLocation = useRequireLocation()
   const reorder = async (o: Order) => {
+    if (!requireLocation()) return
     setBusy(o.uuid)
     try {
       const partner = await resolvePartner(o)

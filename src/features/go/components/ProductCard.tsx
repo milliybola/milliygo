@@ -2,6 +2,7 @@ import { message } from 'antd'
 import { productLine, setLine, useCart, useLineQty } from '../lib/cart'
 import type { Partner, Product, ProductSet } from '../lib/types'
 import { cx, dealLabel, formatSum, som } from '../lib/utils'
+import { useRequireLocation } from '../lib/session'
 import { Badge, Img, Stepper } from '../ui/primitives'
 
 export function DealBadges({ product, isSet }: { product?: Product; isSet?: boolean }) {
@@ -48,7 +49,9 @@ export function PriceLine({
 }
 
 function useClosedGuard(partner: Partner, closed: boolean) {
+  const requireLocation = useRequireLocation()
   return () => {
+    if (!closed && !requireLocation()) return false
     if (closed) {
       message.info(
         partner.partner_type === 'SHOP'
