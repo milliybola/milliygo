@@ -1,17 +1,28 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { getCookie, deleteCookie } from 'cookies-next'
 import { getErrorMessage } from '../helpers/get-error-message'
-import { IErrorMessage } from '@/types'
 import { notification } from 'antd'
 
 const hostname = typeof window !== 'undefined' ? window.location.hostname : ''
 
-const authURL =
+// Token yangilash: superapp bilan bir xil endpoint (avval eski emehmon auth serveriga ketardi)
+const REFRESH_URL =
   hostname === 'sayohat.uz'
-    ? 'https://back.sayohat.uz/auth/api/v1'
-    : 'https://auth.emehmon.xdevs.uz/api/v1'
+    ? 'https://back.sayohat.uz/auth/api/v1/account/me/refresh/'
+    : 'https://mytizim.uz/api/token/refresh/'
 
 let refreshTokenPromise: Promise<string> | null = null
+
+/**
+ * Faqat auth kalitlarini o'chiradi. Avval localStorage.clear() chaqirilardi —
+ * savatlar, tanlangan manzil va boshqa sozlamalar ham o'chib ketardi.
+ */
+export function clearAuthStorage() {
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
+  localStorage.removeItem('authState')
+  deleteCookie('userInfo')
+}
 
 class CustomError extends Error {
   code: string
@@ -46,10 +57,16 @@ export const globalOnResponseRejected: (_error: AxiosError) => Promise<any> = as
       description: detail,
     })
 
-    setTimeout(() => {
-      window.history.back()
-    }, 500)
+    // Avval bu yerda window.history.back() chaqirilardi — har qanday 503 da
+    // foydalanuvchi oldingi sahifaga otib yuborilardi. Olib tashlandi.
+    return Promise.reject(error)
+  }
 
+  // 401, refresh token yo'q, lekin foydalanuvchi "kirgan" deb belgilangan —
+  // eskirgan sessiya: auth holatini tozalaymiz (aks holda UI "kirgan" bo'lib qolardi)
+  if (!refreshT && error.response?.status === 401 && localStorage.getItem('authState')) {
+    clearAuthStorage()
+    window.location.reload()
     return Promise.reject(error)
   }
 
@@ -73,32 +90,30 @@ export const globalOnResponseRejected: (_error: AxiosError) => Promise<any> = as
     }
 
     refreshTokenPromise = axios
-      .post(`${authURL}/account/me/refresh/`, { refresh: refreshT })
+      .post(REFRESH_URL, { refresh: refreshT })
       .then(({ data }) => {
-        localStorage.setItem('access_token', data.access)
-        axios.defaults.headers.common['Authorization'] = `Bearer ${data.access}`
-        return data.access
+        // Javob `{ success, data: { access, refresh } }` yoki tekis bo'lishi mumkin
+        const body = data?.data ?? data
+        const access = body?.access || body?.token
+        if (!access) throw new Error('Token yangilanmadi')
+        localStorage.setItem('access_token', access)
+        if (body?.refresh) localStorage.setItem('refresh_token', body.refresh)
+        return access as string
       })
       .catch((err) => {
-        const errorData = err?.response?.data as IErrorMessage[]
-
-        if (err?.response?.status === 500) {
-          notification.error({ message: messages.server })
-        } else if (Array.isArray(errorData)) {
-          errorData.forEach((val) => {
-            notification.error({
-              message: val?.error_type,
-              description: val?.detail,
-            })
+        const status = err?.response?.status
+        // Faqat server refresh tokenni rad etganda (4xx) sessiyani yopamiz;
+        // tarmoq/5xx xatosida sessiya saqlanadi (superapp bilan bir xil).
+        if (status && status >= 400 && status < 500) {
+          notification.warning({
+            message: 'Sessiya muddati tugadi',
+            description: 'Iltimos, qaytadan kiring.',
           })
-        } else {
-          notification.error({ message: 'Unexpected error occurred.' })
+          clearAuthStorage()
+          window.location.reload()
+        } else if (status === 500) {
+          notification.error({ message: messages.server })
         }
-
-        localStorage.clear()
-        deleteCookie('userInfo')
-        window.location.reload()
-
         throw err
       })
       .finally(() => {

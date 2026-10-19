@@ -53,13 +53,24 @@ export const LocationService = {
     location_type?: string
     page?: number
   }): Promise<PopularLocationsResponse> => {
-    return request({
+    const res: any = await request({
       url: '/locations/',
       method: 'get',
       params,
     })
+    // Backend turli shaklda qaytaradi: { results: [] } (sahifalangan), { data: { locations } }, { locations } yoki oddiy massiv
+    const list: PopularLocation[] = Array.isArray(res)
+      ? res
+      : res?.data?.locations ||
+        res?.data?.results ||
+        res?.results ||
+        res?.locations ||
+        (Array.isArray(res?.data) ? res.data : [])
+    return {
+      success: true,
+      data: { count: res?.count ?? res?.data?.count ?? list.length, locations: list },
+    }
   },
-
   getNeighborhoods: async (): Promise<NeighborhoodsResponse> => {
     return request({
       url: '/locations/neighborhoods/',

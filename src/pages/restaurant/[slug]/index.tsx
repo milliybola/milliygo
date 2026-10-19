@@ -1,52 +1,29 @@
-import CBreadcrumb from '@/components/common/CBreadcrumb'
-import { useTranslations } from 'next-intl'
-import RestaurantItem from '@/features/Restaurant/RestaurantItem'
+import RestaurantPage from '@/features/go/pages/RestaurantPage'
 
-import { baseURL } from '@/utils/axios'
-
+/**
+ * Eski havolalar (/restaurant/<uuid>/) uchun build vaqtida yaratiladigan sahifalar.
+ * Yangi havolalar /restaurant/?id=<uuid> ko'rinishida — ular build'dan keyin
+ * qo'shilgan restoranlar uchun ham ishlaydi.
+ */
 export async function getStaticPaths() {
   try {
-    const res = await fetch(`${baseURL}/partner/?partner_type=RESTAURANT`).then((v) => v.json())
+    const res = await fetch('https://mytizim.uz/partner/?partner_type=RESTAURANT').then((v) =>
+      v.json()
+    )
     const partners = res?.data?.partners || res?.results || []
-
-    const paths = partners.map((p: any) => ({
-      params: { slug: p.uuid || p.id.toString() },
-    }))
-
-    return { paths, fallback: false }
-  } catch (error) {
-    console.error('Failed to fetch restaurant paths:', error)
+    return {
+      paths: partners.map((p: any) => ({ params: { slug: String(p.uuid || p.id) } })),
+      fallback: false,
+    }
+  } catch {
     return { paths: [], fallback: false }
   }
 }
 
-export async function getStaticProps(context: any) {
-  let messages = {}
-  try {
-    if (context && context.locale) {
-      messages = (await import(`../../../locales/${context.locale}.json`)).default
-    } else {
-      messages = (await import(`../../../locales/uz.json`)).default
-    }
-  } catch (err) {
-    console.warn('Failed to load locales for', context?.locale)
-  }
-  return { props: { messages } }
+export async function getStaticProps() {
+  return { props: {} }
 }
 
-import { useHasHydrated } from '@/hooks/useHasHydrated'
-
-const StoreItemPage = () => {
-  const t = useTranslations()
-  const hasHydrated = useHasHydrated()
-
-  if (!hasHydrated) return null
-
-  return (
-    <main className="mb-20 bg-white px-3 sm:px-10">
-      <RestaurantItem />
-    </main>
-  )
+export default function RestaurantBySlug() {
+  return <RestaurantPage />
 }
-
-export default StoreItemPage

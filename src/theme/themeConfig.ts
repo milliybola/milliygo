@@ -1,10 +1,10 @@
-import { onest } from '@/pages/_app'
+import { appFont } from '@/pages/_app'
 import { colors } from '@/styles'
 import type { ThemeConfig } from 'antd'
 
 const theme: ThemeConfig = {
   token: {
-    fontFamily: onest.style.fontFamily,
+    fontFamily: appFont.style.fontFamily,
     fontSize: 15,
     colorPrimary: colors.primary,
     fontSizeHeading1: 49,
@@ -13,7 +13,7 @@ const theme: ThemeConfig = {
     fontSizeHeading3: 24,
     fontSizeHeading4: 18,
     fontSizeHeading5: 16,
-    colorText: colors.primary_dark,
+    colorText: '#111111',
     colorErrorBorder: colors.danger,
     fontWeightStrong: 700,
     borderRadiusLG: 24,
@@ -67,7 +67,7 @@ const theme: ThemeConfig = {
     Input: {
       paddingInlineLG: 16,
 
-      colorText: colors.primary_dark,
+      colorText: '#111111',
       colorTextPlaceholder: colors.secondary,
       borderRadiusLG: 16,
       fontSizeLG: 16,
@@ -76,7 +76,7 @@ const theme: ThemeConfig = {
     },
     InputNumber: {
       controlHeightLG: 48,
-      colorText: colors.primary_dark,
+      colorText: '#111111',
       colorTextPlaceholder: colors.secondary,
       borderRadiusLG: 8,
       fontSizeLG: 16,

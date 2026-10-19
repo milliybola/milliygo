@@ -1,6 +1,6 @@
 import isDateActive from '@/helpers/is-date-active'
 import { formatNumber } from '@/helpers/number-formatter'
-import { onest } from '@/pages/_app'
+import { appFont } from '@/pages/_app'
 import useCurrencyStore from '@/store/currency'
 import { Placement } from '@/types'
 import { Map, Placemark, YMaps } from '@pbe/react-yandex-maps'
@@ -101,7 +101,7 @@ const YandexMap: FC<{
                   }
                   properties={{
                     hintContent: [
-                      `<div class="flex lex-row items-center ${onest.className}">`,
+                      `<div class="flex lex-row items-center ${appFont.className}">`,
                       '<div class="h-[107px] w-[107px]">',
                       `<img alt="${val?.placement_image || val?.image} image" src="${val?.placement_image || val?.image}" class="w-full h-full object-cover"/>`,
                       '</div>',

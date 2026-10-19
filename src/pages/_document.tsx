@@ -4,19 +4,11 @@ import { createCache, extractStyle, StyleProvider } from '@ant-design/cssinjs'
 
 import type { DocumentContext } from 'next/document'
 
-const MyDocument = ({ locale }: DocumentContext) => {
+const MyDocument = () => {
   return (
-    <Html lang={locale}>
+    <Html lang="uz">
       <Head>
         <meta name="google" content="notranslate" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-        <Script
-          src="https://unpkg.com/react-scan/dist/auto.global.js"
-          type="text/javascript"
-          strategy="afterInteractive"
-        />
         <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
       </Head>
       <body className="notranslate">

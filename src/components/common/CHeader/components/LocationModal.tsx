@@ -49,6 +49,27 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
     location ? checkServiceArea(location.lat, location.lng, neighborhoods) : false
   )
   const [loading, setLoading] = useState<boolean>(false)
+  // Foydalanuvchi xaritadan joy tanlamaguncha pin va 'hududdan tashqarida' xabari ko'rsatilmaydi
+  const [touched, setTouched] = useState<boolean>(!!location)
+
+  // Hali joy tanlanmagan bo'lsa — xarita xizmat hududining markazida ochiladi
+  const areaCenter = useMemo<[number, number]>(() => {
+    let minLat = Infinity
+    let maxLat = -Infinity
+    let minLng = Infinity
+    let maxLng = -Infinity
+    neighborhoods.forEach((n) =>
+      n.coordinates?.[0]?.forEach(([lng, lat]) => {
+        minLat = Math.min(minLat, lat)
+        maxLat = Math.max(maxLat, lat)
+        minLng = Math.min(minLng, lng)
+        maxLng = Math.max(maxLng, lng)
+      })
+    )
+    return Number.isFinite(minLat)
+      ? [(minLat + maxLat) / 2, (minLng + maxLng) / 2]
+      : (DEFAULT_MAP_CENTER as [number, number])
+  }, [neighborhoods])
   const [options, setOptions] = useState<YandexAddressOption[]>([])
   const [mapInstance, setMapInstance] = useState<any>(null)
   const [showPopularList, setShowPopularList] = useState<boolean>(false)
@@ -157,6 +178,7 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
     const lat = parseFloat(loc.latitude)
     const lng = parseFloat(loc.longitude)
     const coords: [number, number] = [lat, lng]
+    setTouched(true)
     setTempCoords(coords)
     setAddress(loc.name + ' (' + loc.address + ')')
     setIsValid(checkServiceArea(lat, lng, neighborhoods))
@@ -166,6 +188,7 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
 
   const handleSelectYandexAddress = (opt: YandexAddressOption) => {
     const coords = opt.coords
+    setTouched(true)
     setTempCoords(coords)
     setAddress(opt.label)
     setIsValid(checkServiceArea(coords[0], coords[1], neighborhoods))
@@ -176,6 +199,7 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
       const coords = e.get('coords') as [number, number]
       const inArea = checkServiceArea(coords[0], coords[1], neighborhoods)
 
+      setTouched(true)
       setTempCoords(coords)
       setIsValid(inArea)
       setLoading(true)
@@ -212,6 +236,7 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
     navigator.geolocation.getCurrentPosition(
       async ({ coords: { latitude, longitude } }) => {
         const coords: [number, number] = [latitude, longitude]
+        setTouched(true)
         setTempCoords(coords)
         setIsValid(checkServiceArea(latitude, longitude, neighborhoods))
         const addr = await geocodeCoords(latitude, longitude)
@@ -248,6 +273,7 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
 
   useEffect(() => {
     if (open && location) {
+      setTouched(true)
       setTempCoords([location.lat, location.lng])
       setAddress(location.address || '')
       setIsValid(checkServiceArea(location.lat, location.lng, neighborhoods))
@@ -261,14 +287,33 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
   // the modal is actually open and the layout has had time to settle.
   useEffect(() => {
     if (!open || !mapInstance) return
-    const timer = setTimeout(() => {
+    const refit = () => {
       try {
         mapInstance.container.fitToViewport()
       } catch (error) {
         console.error('Map fitToViewport error:', error)
       }
-    }, 350)
-    return () => clearTimeout(timer)
+    }
+    // Modal animatsiyasi / iOS manzil paneli tugagach o'lcham bir necha marta o'zgarishi mumkin
+    const timers = [100, 350, 800, 1600].map((ms) => setTimeout(refit, ms))
+    let ro: ResizeObserver | undefined
+    try {
+      const el = mapInstance.container.getElement?.() as HTMLElement | undefined
+      if (el && typeof ResizeObserver !== 'undefined') {
+        ro = new ResizeObserver(refit)
+        ro.observe(el)
+      }
+    } catch {
+      /* e'tiborsiz */
+    }
+    window.addEventListener('resize', refit)
+    window.addEventListener('orientationchange', refit)
+    return () => {
+      timers.forEach(clearTimeout)
+      ro?.disconnect()
+      window.removeEventListener('resize', refit)
+      window.removeEventListener('orientationchange', refit)
+    }
   }, [open, mapInstance])
 
   const renderMap = () => (
@@ -283,7 +328,7 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
       }}
     >
       <Map
-        state={{ center: tempCoords, zoom: DEFAULT_MAP_ZOOM }}
+        state={{ center: touched ? tempCoords : areaCenter, zoom: DEFAULT_MAP_ZOOM }}
         width="100%"
         height="100%"
         onClick={handleMapClick}
@@ -308,8 +353,8 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
               geometry={[zone.ring]}
               onClick={handleMapClick}
               options={{
-                fillColor: 'rgba(197, 160, 89, 0.08)',
-                strokeColor: '#C5A059',
+                fillColor: 'rgba(21, 128, 61, 0.08)',
+                strokeColor: '#15803D',
                 strokeOpacity: 0.8,
                 strokeWidth: 2,
                 fillOpacity: 1,
@@ -317,15 +362,17 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
             />
           ))}
 
-        <Placemark
-          geometry={tempCoords}
-          options={{
-            iconLayout: 'default#image',
-            iconImageSize: [40, 40],
-            iconImageOffset: [-20, -40],
-            iconImageHref: '/location-map-active.png',
-          }}
-        />
+        {touched && (
+          <Placemark
+            geometry={tempCoords}
+            options={{
+              iconLayout: 'default#image',
+              iconImageSize: [40, 40],
+              iconImageOffset: [-20, -40],
+              iconImageHref: '/location-map-active.png',
+            }}
+          />
+        )}
 
         {/* Mashhur joylar — xaritada o'z koordinatasida, ustiga olib borilganda
             (hover) nomi ko'rinadigan, bosilganda esa tanlanadigan belgilar */}
@@ -340,7 +387,7 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
             }}
             options={{
               preset: 'islands#icon',
-              iconColor: '#C5A059',
+              iconColor: '#15803D',
             }}
             onClick={() => handleSelectPopularLocation(loc)}
           />
@@ -350,7 +397,7 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
         <GeolocationControl options={{ position: { right: 20, top: 180 } }} />
       </Map>
 
-      {!isValid && (
+      {touched && !isValid && (
         <div
           style={{
             position: 'absolute',
@@ -407,8 +454,8 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
               onClick={() => setShowPopularList((v) => !v)}
               className={`flex flex-shrink-0 items-center gap-1.5 self-start rounded-full border px-3 py-1.5 text-[12px] font-bold transition-all duration-200 ${
                 showPopularList
-                  ? 'border-[#C5A059] bg-[#C5A059] text-white'
-                  : 'border-[#C5A059]/30 bg-[#C5A059]/10 text-[#B38F4D]'
+                  ? 'border-[#15803D] bg-[#15803D] text-white'
+                  : 'border-[#15803D]/30 bg-[#15803D]/10 text-[#15803D]'
               }`}
             >
               <EnvironmentOutlined style={{ fontSize: 11 }} />
@@ -417,14 +464,14 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
           )}
 
           {showPopularList && (
-            <div className="flex max-h-[340px] flex-shrink-0 flex-col overflow-hidden rounded-2xl border border-[#C5A059]/20 bg-white shadow-[0_16px_36px_rgba(0,0,0,0.07)]">
+            <div className="flex max-h-[340px] flex-shrink-0 flex-col overflow-hidden rounded-2xl border border-[#15803D]/20 bg-white shadow-[0_16px_36px_rgba(0,0,0,0.07)]">
               {/* Search sits at the top of the list — filters it live */}
-              <div className="flex-shrink-0 border-b border-[#f2ead9] bg-[#FDFBF7] p-2">
+              <div className="flex-shrink-0 border-b border-[#EEF0F3] bg-[#F7F8FA] p-2">
                 <Input
                   placeholder="Mashhur joylar ichidan qidiring..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  prefix={<SearchOutlined style={{ color: '#C5A059', fontSize: 13 }} />}
+                  prefix={<SearchOutlined style={{ color: '#15803D', fontSize: 13 }} />}
                   allowClear
                   autoFocus
                   className="location-search-input"
@@ -448,13 +495,13 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
                           onClick={() => handleSelectPopularLocation(loc)}
                           className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-all duration-200 ${
                             active
-                              ? 'border-[#C5A059] bg-[#FBF6EC] shadow-sm'
+                              ? 'border-[#15803D] bg-[#E8F7EE] shadow-sm'
                               : 'border-transparent active:bg-[#fafaf9]'
                           }`}
                         >
                           <div
                             className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
-                              active ? 'bg-[#C5A059] text-white' : 'bg-[#C5A059]/10 text-[#B38F4D]'
+                              active ? 'bg-[#15803D] text-white' : 'bg-[#15803D]/10 text-[#15803D]'
                             }`}
                           >
                             {getLocationIcon(loc.location_type)}
@@ -486,7 +533,9 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
           )}
 
           {/* Map takes whatever room remains */}
-          <div className="min-h-[300px] flex-1">{renderMap()}</div>
+          <div className="relative min-h-[300px] flex-1">
+            <div className="absolute inset-0">{renderMap()}</div>
+          </div>
         </div>
 
         {/* ── Desktop/tablet layout: list + map side-by-side (unchanged) ── */}
@@ -522,7 +571,7 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
                   onClick={() => setSelectedCategory(cat.key)}
                   className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
                     selectedCategory === cat.key
-                      ? 'bg-[#C5A059] text-white shadow-sm'
+                      ? 'bg-[#15803D] text-white shadow-sm'
                       : 'bg-[#f5f5f5] text-[#555] hover:bg-[#eaeaea]'
                   }`}
                 >
@@ -558,13 +607,13 @@ const LocationModalContent: React.FC<LocationModalProps> = ({ open, onClose }) =
                           onClick={() => handleSelectPopularLocation(loc)}
                           className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 transition-all duration-200 ${
                             active
-                              ? 'border-[#C5A059] bg-[#FBF6EC] shadow-sm'
+                              ? 'border-[#15803D] bg-[#E8F7EE] shadow-sm'
                               : 'border-[#f3f3f1] bg-[#fafaf9]/30 hover:border-[#e2e2df] hover:bg-[#fafaf9]'
                           }`}
                         >
                           <div
                             className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
-                              active ? 'bg-[#C5A059] text-white' : 'bg-[#C5A059]/10 text-[#B38F4D]'
+                              active ? 'bg-[#15803D] text-white' : 'bg-[#15803D]/10 text-[#15803D]'
                             }`}
                           >
                             {getLocationIcon(loc.location_type)}
@@ -716,8 +765,8 @@ const LocationModal: React.FC<LocationModalProps> = (props) => {
     <Modal
       title={
         <Space size={10}>
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#C5A059]/10">
-            <EnvironmentOutlined style={{ color: '#B38F4D', fontSize: 15 }} />
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#15803D]/10">
+            <EnvironmentOutlined style={{ color: '#15803D', fontSize: 15 }} />
           </span>
           <span className="text-[15px] font-black tracking-tight text-gray-900">
             Yetkazib berish hududini tanlang
@@ -759,11 +808,11 @@ const LocationModal: React.FC<LocationModalProps> = (props) => {
           box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.12) !important;
         }
 
-        /* Fullscreen takeover on mobile — the modal was otherwise centered
+        /* Fullscreen takeover on phone/tablet (<1024px, same switch as the mobile layout above) — the modal was otherwise centered
            at a fixed width, letting its content (list + map) overflow the
            viewport height with no internal scroll, so the map often ended
            up pushed off-screen. */
-        @media (max-width: 767px) {
+        @media (max-width: 1023px) {
           /* The wrap is antd's own overlay/backdrop container — it defaults
              to overflow:auto so a tall modal can be scrolled as a whole.
              That's exactly what caused the "whole modal scrolls" bug: once

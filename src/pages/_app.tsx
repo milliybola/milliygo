@@ -1,21 +1,20 @@
+import '@ant-design/v5-patch-for-react-19'
 import { App as AppAntd, ConfigProvider } from 'antd'
 import { NextIntlClientProvider } from 'next-intl'
-import { Onest } from 'next/font/google'
+import { Roboto } from 'next/font/google'
 import { useRouter } from 'next/router'
 import NextNProgress from 'nextjs-progressbar'
 import { QueryClientProvider } from '@tanstack/react-query'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { YMaps } from '@pbe/react-yandex-maps'
 import { YANDEX_API_KEY } from '@/constants/api-keys'
 
 import type { AppProps } from 'next/app'
 
 import CLayout from '@/components/common/CLayout'
-import SupportChat from '@/components/common/SupportChat'
 import { queryClient } from '@/config/queryClient'
 import { AuthProvider } from '@/features/Account/auth/context/authContext'
 import { getAntdLocaleCode } from '@/helpers/get-antd-locale-code'
-import { useFallbackMessage } from '@/hooks/useFallbackMessage'
+import { useFallbackMessage, uzMessages } from '@/hooks/useFallbackMessage'
 import { colors } from '@/styles'
 import uz_UZ from 'antd/lib/locale/uz_UZ'
 import Head from 'next/head'
@@ -26,11 +25,12 @@ import 'swiper/css'
 import 'react-datepicker/dist/react-datepicker.css'
 import GlobalLoginModal from '@/features/Account/auth/components/GlobalLoginModal'
 
-export const onest = Onest({
-  subsets: ['latin'],
+export const appFont = Roboto({
+  subsets: ['latin', 'latin-ext', 'cyrillic'],
+  weight: ['400', '500', '700', '900'],
   display: 'swap',
   adjustFontFallback: false,
-  variable: '--font-onest',
+  variable: '--font-app',
 })
 
 const App = ({ Component, pageProps }: AppProps) => {
@@ -58,7 +58,9 @@ const App = ({ Component, pageProps }: AppProps) => {
   return (
     <>
       <Head>
-        <title>Milliy Go - yetkazib berish xizmati</title>
+        <title>MilliyGo — taomlar va mahsulotlarni yetkazib berish</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#FFFFFF" />
         <meta name="description" content="Ovqat va mahsulotlarni tez va oson buyurtma qiling" />
         <meta name="agd-partner-manual-verification" />
       </Head>
@@ -66,7 +68,7 @@ const App = ({ Component, pageProps }: AppProps) => {
         <NextIntlClientProvider
           locale={router.locale || 'uz'}
           timeZone="Asia/Tashkent"
-          messages={pageProps.messages ?? {}}
+          messages={pageProps.messages ?? uzMessages}
           getMessageFallback={({ key }) => {
             return getFallbackMessage(key)
           }}
@@ -74,7 +76,7 @@ const App = ({ Component, pageProps }: AppProps) => {
           <AppAntd>
             <style jsx global>{`
               :root {
-                font-family: ${onest.style.fontFamily};
+                font-family: ${appFont.style.fontFamily};
               }
             `}</style>
 
@@ -85,10 +87,8 @@ const App = ({ Component, pageProps }: AppProps) => {
                 <YMaps query={{ apikey: YANDEX_API_KEY, lang: 'uz_UZ' as any }}>
                   <CLayout>
                     <Component {...pageProps} />
-                    <SupportChat />
                   </CLayout>
                 </YMaps>
-                <ReactQueryDevtools initialIsOpen={false} />
               </AuthProvider>
             </QueryClientProvider>
           </AppAntd>

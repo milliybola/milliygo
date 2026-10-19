@@ -9,6 +9,8 @@ import React, { ReactNode } from 'react'
 import { postTelegramUser } from '@/api'
 import { withFacebookAuth, withGoogleAuth, withOneIdAuth, withOneIdAuth2 } from '../api'
 import { useVerification } from '@/store/useVerification'
+import { extractTokens, fetchMe } from '@/features/go/lib/api'
+import { queryClient } from '@/config/queryClient'
 
 interface AuthContextProps {
   authStore: ReturnType<typeof useAuthStore>
@@ -121,21 +123,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const res = await postTelegramUser(data)
       hide()
-      if (res.access) {
-        localStorage.setItem('refresh_token', res.refresh || '')
-        localStorage.setItem('access_token', res.access)
-        
-        const { user_permissions: _permissions, ...shortUserInfo } = res.user
-        setCookie('userInfo', shortUserInfo)
-        
-        authStore.login(res.user)
-        setLoginModalOpen(false)
-        
-        if (!router.pathname.includes('account')) {
-          router.push('/profile')
+      // Javob `{ success, data: { access, refresh, user } }` yoki tekis bo'lishi mumkin
+      const { access, refresh, user } = extractTokens(res)
+      if (access) {
+        localStorage.setItem('access_token', access)
+        if (refresh) localStorage.setItem('refresh_token', refresh)
+        let profile: any = user || {}
+        try {
+          const me = await fetchMe()
+          if (me) profile = { ...profile, ...me }
+        } catch {
+          /* profil keyinroq yuklanadi */
         }
-        
-        message.success(t('user.login-success') || 'Muvaffaqiyatli kirdingiz', 2)
+        const { user_permissions: _permissions, ...shortUserInfo } = profile
+        setCookie('userInfo', shortUserInfo)
+
+        authStore.login(profile)
+        setLoginModalOpen(false)
+        queryClient.invalidateQueries({ queryKey: ['go'] })
+        // Avval /profile ga majburan yo'naltirilardi — Mini App foydalanuvchisi
+        // bosh sahifa o'rniga profilga tushib qolardi. Endi joyida qoladi.
+        message.success('Muvaffaqiyatli kirdingiz', 2)
       }
     } catch (error: any) {
       hide()
@@ -152,6 +160,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsVerified(false)
     setVerifiedTelegram(null)
     authStore.logout()
+    queryClient.removeQueries({ queryKey: ['go', 'me'] })
+    queryClient.removeQueries({ queryKey: ['go', 'orders'] })
     document.cookie = 'userInfo=; path=/; max-age=0;'
   }
 

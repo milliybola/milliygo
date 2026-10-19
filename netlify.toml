@@ -6,6 +6,16 @@
   NETLIFY_NEXT_PLUGIN_SKIP = "true"
 
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from = "/restaurant/*"
+  to = "/restaurant/index.html"
   status = 200
+
+[[redirects]]
+  from = "/store/*"
+  to = "/store/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/404/index.html"
+  status = 404

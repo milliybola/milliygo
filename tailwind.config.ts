@@ -27,7 +27,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        onest: 'var(--font-onest)',
+        app: 'var(--font-app)',
       },
       colors: {
         border: border,
@@ -44,6 +44,24 @@ const config: Config = {
           light: light_gray,
         },
         blue,
+        go: {
+          ink: '#111111',
+          muted: '#6B7280',
+          hint: '#9CA3AF',
+          chip: '#F2F3F5',
+          line: '#F2F3F6',
+          line2: '#EEF0F3',
+          green: '#15803D',
+          bright: '#16A34A',
+          soft: '#E8F7EE',
+          gold: '#F5B400',
+          goldsoft: '#FFF4CC',
+          goldtext: '#92400E',
+          red: '#EF4444',
+          blue: '#2563EB',
+          bluesoft: '#EFF6FF',
+          amber: '#F59E0B',
+        },
       },
       container: {
         center: true,

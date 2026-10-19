@@ -3,12 +3,12 @@
   "trailingSlash": true,
   "rewrites": [
     {
-      "source": "/((?!_next|static|favicon.ico|robots.txt|assets|.*\\..*).*)/",
-      "destination": "/index.html"
+      "source": "/restaurant/:id((?!index.html).+)/",
+      "destination": "/restaurant/index.html"
     },
     {
-      "source": "/((?!_next|static|favicon.ico|robots.txt|assets|.*\\..*).*)",
-      "destination": "/index.html"
+      "source": "/store/:id((?!index.html).+)/",
+      "destination": "/store/index.html"
     }
   ]
 }

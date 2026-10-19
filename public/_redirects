@@ -1,1 +1,6 @@
-/*    /index.html    200
+# Statik eksport: build'dan keyin qo'shilgan restoran/do'konlar uchun
+# (fayl mavjud bo'lsa — u ustun turadi)
+/restaurant/*   /restaurant/index.html   200
+/store/*        /store/index.html        200
+# Noma'lum sahifalar — 404 (avval hammasi bosh sahifaga yo'naltirilardi)
+/*              /404/index.html          404
