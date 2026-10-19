@@ -1,2 +1,12 @@
-User-Agent: *
-Disallow: /
+﻿User-agent: *
+Allow: /
+Disallow: /cart/
+Disallow: /checkout/
+Disallow: /orders/
+Disallow: /profile/
+Disallow: /favorites/
+Disallow: /auth/
+Disallow: /delete-account/
+Disallow: /search/
+
+Sitemap: https://www.milliyapp.uz/sitemap.xml

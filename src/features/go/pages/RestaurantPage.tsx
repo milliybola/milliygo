@@ -1,4 +1,4 @@
-import Head from 'next/head'
+import PartnerSeo from '../components/PartnerSeo'
 import Link from 'next/link'
 import { message } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -322,9 +322,7 @@ export default function RestaurantPage() {
 
   return (
     <div className="bg-white">
-      <Head>
-        <title>{`${partner.name} — MilliyGo`}</title>
-      </Head>
+      <PartnerSeo partner={partner} />
 
       <TopBar
         title={partner.name}

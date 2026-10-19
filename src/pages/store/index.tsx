@@ -1,4 +1,4 @@
-import Head from 'next/head'
+import Seo from '@/components/common/Seo'
 import PartnersListPage from '@/features/go/pages/PartnersListPage'
 import StorePage from '@/features/go/pages/StorePage'
 import { useRouteId } from '@/features/go/lib/route'
@@ -9,9 +9,11 @@ export default function StoreRoute() {
   if (id) return <StorePage />
   return (
     <>
-      <Head>
-        <title>Do&apos;konlar — MilliyGo</title>
-      </Head>
+      <Seo
+        title="Do'konlar va marketlar"
+        description="G'allaorol do'konlari va marketlari: meva-sabzavot, go'sht, sut mahsulotlari, ichimliklar va uy-ro'zg'or mollari. Uyga tez yetkazib berish — MilliyGo."
+        path="/store/"
+      />
       <PartnersListPage type="SHOP" />
     </>
   )

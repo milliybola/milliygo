@@ -33,6 +33,18 @@ export const appFont = Roboto({
   variable: '--font-app',
 })
 
+/** Shaxsiy sahifalar: qidiruv tizimlari indekslamaydi */
+const PRIVATE = [
+  '/cart',
+  '/checkout',
+  '/orders',
+  '/profile',
+  '/favorites',
+  '/search',
+  '/auth',
+  '/delete-account',
+]
+
 const App = ({ Component, pageProps }: AppProps) => {
   const router = useRouter()
   const [locale, setLocale] = useState<any>(uz_UZ)
@@ -58,10 +70,17 @@ const App = ({ Component, pageProps }: AppProps) => {
   return (
     <>
       <Head>
-        <title>MilliyGo — taomlar va mahsulotlarni yetkazib berish</title>
+        <title>MilliyGo — taomlar va mahsulotlarni tez yetkazib berish</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="theme-color" content="#FFFFFF" />
-        <meta name="description" content="Ovqat va mahsulotlarni tez va oson buyurtma qiling" />
+        <meta name="theme-color" content="#15803D" />
+        <meta name="format-detection" content="telephone=no" />
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+        <link rel="apple-touch-icon" href="/go/logo.png" />
+        {PRIVATE.some((p) => router.pathname === p || router.pathname.startsWith(`${p}/`)) && (
+          <meta name="robots" content="noindex, nofollow" />
+        )}
         <meta name="agd-partner-manual-verification" />
       </Head>
       <ConfigProvider theme={theme} locale={locale}>

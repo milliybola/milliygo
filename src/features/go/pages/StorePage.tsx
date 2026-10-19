@@ -1,3 +1,4 @@
+import PartnerSeo from '../components/PartnerSeo'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect, useMemo, useState } from 'react'
@@ -237,9 +238,7 @@ export default function StorePage() {
   const threshold = partner.free_delivery_threshold
   return (
     <div className="pb-[170px]">
-      <Head>
-        <title>{`${partner.name} — MilliyGo`}</title>
-      </Head>
+      <PartnerSeo partner={partner} />
       <StoreTopBar
         partner={partner}
         lat={lat}
