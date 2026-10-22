@@ -3,9 +3,8 @@ import { message } from 'antd'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import ApiGap from '@/components/common/ApiGap'
 import { SUPPORT_TELEGRAM } from '../layout/GoFooter'
-import { usePartner, useOrder } from '../lib/queries'
+import { usePartner, useOrder, usePublicOrder } from '../lib/queries'
 import { useQueryParam } from '../lib/route'
 import { useHydrated, useSession, useStorageValue } from '../lib/session'
 import { orderNumber, orderStatus } from '../lib/status'
@@ -17,6 +16,7 @@ import {
   distanceLabel,
   etaRange,
   lineTotal,
+  qtyLabel,
   som,
   workingHoursLabel,
   zoneFor,
@@ -195,7 +195,7 @@ function plateParts(raw?: string | null): [string, string] | null {
   return [m[1], m[2].replace(/(?<=[A-Z])(?=\d)|(?<=\d)(?=[A-Z])/g, ' ')]
 }
 
-function CourierCard({ order }: { order: Order }) {
+function CourierCard({ order, shared }: { order: Order; shared?: boolean }) {
   const c = order.courier
   if (!c || !(c.full_name || c.phone || c.license_plate)) return null
   const plate = plateParts(c.license_plate)
@@ -218,7 +218,9 @@ function CourierCard({ order }: { order: Order }) {
           <div className="truncate text-[1.0625rem] font-[600] text-[#111827]">
             {c.full_name || 'Kuryer'}
           </div>
-          <div className="mt-1 text-[0.8125rem] font-[500] text-[#6B7280]">Sizning kuryeringiz</div>
+          <div className="mt-1 text-[0.8125rem] font-[500] text-[#6B7280]">
+            {shared ? 'Buyurtma kuryeri' : 'Sizning kuryeringiz'}
+          </div>
           {c.rating ? (
             <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-solid border-[#FDE68A] bg-[#FEF9C3] px-2.5 py-1 text-[0.8125rem] font-[600] text-[#111827]">
               <span className="text-[#713F12]">★</span> {c.rating.toFixed(1)}
@@ -303,11 +305,14 @@ function ItemsCard({
   snap,
   extraRows,
   footer,
+  showPrices = true,
 }: {
   order?: Order
   snap: Snapshot | null
   extraRows?: { label: string; value: string; green?: boolean }[]
   footer?: React.ReactNode
+  /** Ulashilgan havolada narxlar ko'rsatilmaydi (backend ham bermaydi) */
+  showPrices?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const items = order?.items.length
@@ -316,22 +321,32 @@ function ItemsCard({
         name: i.name,
         image: i.image,
         qty: i.quantity,
+        // "1.5 kg", "2 × Quti", dona uchun "3 dona"
+        label: i.unit === 'KG' || i.packaging_name ? qtyLabel(i) : `${i.quantity} dona`,
+        countable: i.unit === 'KG' && !i.packaging_name ? 1 : Math.ceil(i.quantity),
         unit: i.price,
-        total: i.price * (i.quantity - (i.free_quantity || 0)),
+        total: i.line_total,
         free: i.free_quantity || 0,
+        options: i.options.map((o) => o.name).join(', '),
       }))
     : (snap?.lines || []).map((l) => ({
         key: l.key,
         name: l.name,
         image: l.image,
         qty: l.quantity,
+        label:
+          l.unit === 'KG' || l.packaging
+            ? qtyLabel({ quantity: l.quantity, unit: l.unit, packaging_name: l.packaging?.name })
+            : `${l.quantity} dona`,
+        countable: l.unit === 'KG' && !l.packaging ? 1 : Math.ceil(l.quantity),
         unit: l.price,
         total: lineTotal(l),
         free: 0,
+        options: (l.options || []).map((o) => o.name).join(', '),
       }))
   if (!items.length) return null
   const sum = items.reduce((s, i) => s + i.total, 0)
-  const count = items.reduce((s, i) => s + i.qty, 0)
+  const count = items.reduce((s, i) => s + i.countable, 0)
   return (
     <div className={card}>
       <button
@@ -358,7 +373,7 @@ function ItemsCard({
           Buyurtma tarkibi
         </span>
         <span className="text-[0.938rem] font-[700] text-[#6B7280]">
-          {count} ta · {som(sum)}
+          {count} ta{showPrices ? ` · ${som(sum)}` : ''}
         </span>
         <IconChevronRight
           size={22}
@@ -375,7 +390,7 @@ function ItemsCard({
               <span className="relative block h-12 w-12">
                 <Img src={i.image} alt="" className="h-full w-full rounded-[12px]" />
                 <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-solid border-white bg-[#15803D] px-1 text-[0.7rem] font-[800] text-white">
-                  {i.qty}
+                  {i.label.replace(' dona', '')}
                 </span>
               </span>
               <span className="max-w-[160px] truncate text-[0.875rem] text-[#6B7280]">
@@ -394,11 +409,14 @@ function ItemsCard({
                   <div className="text-[1rem] font-[700] leading-tight text-[#111827]">
                     {i.name}
                   </div>
+                  {i.options && (
+                    <div className="mt-0.5 text-[0.8125rem] text-[#6B7280]">{i.options}</div>
+                  )}
                   <div className="mt-1.5 flex items-center gap-2 text-[0.875rem] text-[#6B7280]">
                     <span className="rounded-lg bg-[#E6F4EA] px-2.5 py-1 font-[700] text-[#15803D]">
-                      {i.qty} dona
+                      {i.label}
                     </span>
-                    <span>× {som(i.unit)}</span>
+                    {showPrices && <span>× {som(i.unit)}</span>}
                   </div>
                   {i.free > 0 && (
                     <div className="mt-1 text-[0.781rem] font-[800] text-[#B45309]">
@@ -406,13 +424,20 @@ function ItemsCard({
                     </div>
                   )}
                 </div>
-                <span className="shrink-0 text-[1rem] font-[700] text-[#111827]">
-                  {som(i.total)}
-                </span>
+                {showPrices && (
+                  <span className="shrink-0 text-[1rem] font-[700] text-[#111827]">
+                    {som(i.total)}
+                  </span>
+                )}
               </div>
             ))}
           </div>
-          <div className="border-0 border-t border-solid border-[#EEF0F2] pt-2.5">
+          <div
+            className={cx(
+              'border-0 border-t border-solid border-[#EEF0F2] pt-2.5',
+              !showPrices && 'hidden'
+            )}
+          >
             <div className="flex items-center justify-between py-0.5 text-[1rem] text-[#111827]">
               <span>Taomlar ({count} ta)</span>
               <b>{som(sum)}</b>
@@ -512,13 +537,26 @@ export default function OrderTrackPage() {
   const hydrated = useHydrated()
   const { isAuthenticated, openLogin } = useSession()
   const snap = useSnapshot(uuid)
-  const q = useOrder(isAuthenticated ? uuid : undefined, true)
-  const order = q.data
+  const ownQ = useOrder(isAuthenticated ? uuid : undefined, true)
+  // Ulashilgan havola: kirmagan odam yoki boshqa odamning buyurtmasi (o'z so'rovi xato bergan) — ochiq API
+  const viaPublic = !isAuthenticated || (ownQ.isError && !ownQ.data)
+  const publicQ = usePublicOrder(uuid, viaPublic)
+  const publicResult = publicQ.data
+  const order = ownQ.data ?? (publicResult?.state === 'ok' ? publicResult.order : undefined)
+  const isPublicView = !ownQ.data && !!order?.is_public
   const partnerQ = usePartner(order?.partner_uuid || snap?.partner?.uuid || undefined)
   const partner = partnerQ.data || snap?.partner || null
   const st = order ? orderStatus(order) : null
   const active = !!st && st.tone !== 'done' && st.tone !== 'cancelled'
-  const { connected, courierPos } = useOrderSocket(uuid, isAuthenticated && active)
+  const socket = useOrderSocket(uuid, isAuthenticated && active && !isPublicView)
+  const connected = socket.connected
+  // Jonli WS faqat egasi uchun; ochiq ko'rinishda kuryerning oxirgi joylashuvi API javobidan olinadi
+  const publicCourier = isPublicView ? order?.raw?.courier : null
+  const publicLat = parseFloat(publicCourier?.latitude)
+  const publicLng = parseFloat(publicCourier?.longitude)
+  const courierPos: [number, number] | null =
+    socket.courierPos ??
+    (Number.isFinite(publicLat) && Number.isFinite(publicLng) ? [publicLat, publicLng] : null)
   const pickup = order ? order.delivery_type === 'PICKUP' : snap?.mode === 'PICKUP'
   const number = order
     ? orderNumber(order)
@@ -644,22 +682,39 @@ export default function OrderTrackPage() {
     </div>
   )
 
-  if (!isAuthenticated) {
-    return shell(
-      <div className="px-4">
+  // Ochiq havola holatlari (kuzatuvchi buyurtma egasi emas)
+  if (viaPublic && !order && !snap) {
+    if (publicResult?.state === 'finished') {
+      const failed = publicResult.status === 'CANCELLED' || publicResult.status === 'REJECTED'
+      return shell(
         <EmptyState
-          emoji="🔐"
-          title="Buyurtmani ko'rish uchun kiring"
-          text="Buyurtma holati faqat uning egasiga ko'rinadi."
+          emoji={failed ? '🚫' : '✅'}
+          title={failed ? 'Buyurtma bekor qilingan' : 'Buyurtma yetkazib berildi'}
+          text="Kuzatish havolasi faqat buyurtma faol bo'lgan vaqtda ochiq turadi."
+          action={<Button href="/">MilliyGo&apos;ga o&apos;tish</Button>}
+        />
+      )
+    }
+    if (publicResult?.state === 'missing') {
+      return shell(
+        <EmptyState
+          emoji="🔎"
+          title="Buyurtma topilmadi"
+          text="Havola noto'g'ri yoki buyurtma hali tasdiqlanmagan. Buyurtma egasi bo'lsangiz, tizimga kiring."
           action={<Button onClick={openLogin}>Kirish</Button>}
         />
-        <div className="flex justify-center">
-          <ApiGap note="Ochiq kuzatish havolasi (token bilan, kirishsiz) uchun endpoint yo'q — GET /orders/<uuid>/ avtorizatsiya talab qiladi" />
-        </div>
-      </div>
-    )
-  }
-  if (q.isLoading && !snap) {
+      )
+    }
+    if (publicQ.isError) {
+      return shell(
+        <EmptyState
+          emoji="📭"
+          title="Buyurtmani yuklab bo'lmadi"
+          text="Internet bilan muammo bor. Qayta urinib ko'ring."
+          action={<Button onClick={() => publicQ.refetch()}>Qayta urinish</Button>}
+        />
+      )
+    }
     return shell(
       <div className="space-y-3 px-4">
         <Skeleton className="h-[220px]" />
@@ -667,13 +722,21 @@ export default function OrderTrackPage() {
       </div>
     )
   }
-  if (q.isError && !snap) {
+  if (!viaPublic && ownQ.isLoading && !snap) {
+    return shell(
+      <div className="space-y-3 px-4">
+        <Skeleton className="h-[220px]" />
+        <Skeleton className="h-[140px]" />
+      </div>
+    )
+  }
+  if (!viaPublic && ownQ.isError && !snap) {
     return shell(
       <EmptyState
         emoji="📭"
         title="Buyurtmani yuklab bo'lmadi"
         text="Buyurtma topilmadi yoki internet bilan muammo bor."
-        action={<Button onClick={() => q.refetch()}>Qayta urinish</Button>}
+        action={<Button onClick={() => ownQ.refetch()}>Qayta urinish</Button>}
       />
     )
   }
@@ -927,14 +990,17 @@ export default function OrderTrackPage() {
           <ItemsCard
             order={order}
             snap={snap}
+            showPrices={!isPublicView}
             extraRows={[{ label: 'Olib ketish', value: 'Bepul', green: true }]}
             footer={
-              <div className="flex items-center gap-2 rounded-[14px] bg-[#FFF4CC] px-3 py-2.5 text-[0.8125rem] font-[600] text-[#78350F]">
-                <span className="shrink-0 text-[#92400E]">
-                  <IconCash size={18} />
-                </span>
-                Naqd pulda — buyurtmani olayotganda restoranda to&apos;laysiz
-              </div>
+              isPublicView ? undefined : (
+                <div className="flex items-center gap-2 rounded-[14px] bg-[#FFF4CC] px-3 py-2.5 text-[0.8125rem] font-[600] text-[#78350F]">
+                  <span className="shrink-0 text-[#92400E]">
+                    <IconCash size={18} />
+                  </span>
+                  Naqd pulda — buyurtmani olayotganda restoranda to&apos;laysiz
+                </div>
+              )
             }
           />
         </div>
@@ -989,6 +1055,14 @@ export default function OrderTrackPage() {
 
   return shell(
     <>
+      {isPublicView && (
+        <div className="px-3 pt-2.5">
+          <div className="rounded-[14px] bg-[#EFF6FF] px-3.5 py-2.5 text-[0.8125rem] font-[600] text-go-blue">
+            Siz ulashilgan buyurtmani kuzatyapsiz. Holat avtomatik yangilanadi; buyurtma
+            yakunlangach havola yopiladi.
+          </div>
+        </div>
+      )}
       {!pickup && order && active && (
         <TrackMap
           order={order}
@@ -1075,7 +1149,7 @@ export default function OrderTrackPage() {
           )}
         </div>
 
-        {order && !pickup && <CourierCard order={order} />}
+        {order && !pickup && <CourierCard order={order} shared={isPublicView} />}
 
         {/* Yo'nalish tafsilotlari */}
         <div className={card}>
@@ -1112,7 +1186,11 @@ export default function OrderTrackPage() {
                 bg="#FFD12B"
                 fg="#5C4A12"
                 title="Yetkazish manzili"
-                sub={order?.address}
+                sub={
+                  isPublicView
+                    ? 'Mijoz manzili ulashilmagan (xaritada taxminiy joy)'
+                    : order?.address
+                }
               />
             </div>
           )}
@@ -1128,10 +1206,10 @@ export default function OrderTrackPage() {
           )}
         </div>
 
-        <ItemsCard order={order} snap={snap} />
+        <ItemsCard order={order} snap={snap} showPrices={!isPublicView} />
 
-        {/* To'lov tafsilotlari */}
-        <div className={card}>
+        {/* To'lov tafsilotlari — ulashilgan havolada ko'rsatilmaydi */}
+        <div className={cx(card, isPublicView && 'hidden')}>
           <div className="flex items-center">
             <span className="flex-1 text-[1.3125rem] font-[800] tracking-[-0.3px] text-[#111827]">
               To&apos;lov tafsilotlari
@@ -1181,10 +1259,10 @@ export default function OrderTrackPage() {
             </a>
           ) : (
             <Link
-              href="/orders/"
+              href={isPublicView ? '/' : '/orders/'}
               className="flex h-[52px] min-w-0 flex-1 items-center justify-center rounded-[14px] bg-[#15803D] px-2 text-[0.875rem] font-[700] text-white no-underline"
             >
-              Buyurtmalarim
+              {isPublicView ? "MilliyGo'ga o'tish" : 'Buyurtmalarim'}
             </Link>
           )}
           <a

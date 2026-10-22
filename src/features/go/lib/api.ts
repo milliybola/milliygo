@@ -6,6 +6,7 @@ import {
   normalizeBanner,
   normalizeBaseCategory,
   normalizeMenu,
+  normalizeNotificationsPage,
   normalizeOrder,
   normalizePartner,
   normalizeSearchProduct,
@@ -15,19 +16,22 @@ import {
   unwrap,
 } from './normalize'
 import type {
+  NotificationsPage,
   BaseCategory,
   MenuCategory,
   Order,
   Partner,
+  PartnerFilters,
   PartnerType,
   ProductSet,
+  PublicOrderResult,
   PromoBanner,
   Promotion,
   SearchResult,
   UserAddress,
   UserProfile,
 } from './types'
-import { API_BASE, isLiveBetween } from './utils'
+import { API_BASE, isLiveBetween, toNum } from './utils'
 
 /**
  * "Jim" klient — ixtiyoriy (hali mavjud bo'lmagan) endpointlar uchun:
@@ -55,11 +59,15 @@ async function optionalGet<T>(url: string, map: (body: any) => T, empty: T): Pro
 }
 
 // ── Hamkorlar ────────────────────────────────────────────────────────────
-export async function fetchPartners(params: {
-  partner_type?: PartnerType
-  category?: string
-}): Promise<Partner[]> {
-  const res = await request({ url: '/partner/', method: 'get', params })
+export async function fetchPartners(
+  params: {
+    partner_type?: PartnerType
+    category?: string
+  } & PartnerFilters
+): Promise<Partner[]> {
+  // Faqat yoqilgan filtrlar yuboriladi (?fast=true), o'chirilganlari so'rovga kirmaydi
+  const query = Object.fromEntries(Object.entries(params).filter(([, v]) => v !== false))
+  const res = await request({ url: '/partner/', method: 'get', params: query })
   return listOf(res, 'partners', 'restaurants').map(normalizePartner)
 }
 
@@ -151,6 +159,26 @@ export async function fetchOrder(uuid: string): Promise<Order> {
   return normalizeOrder(unwrap(res))
 }
 
+/** Tokensiz klient: ulashilgan havola kirishsiz ochiladi, eskirgan token 401 bermasin */
+const anonymous = axios.create({ baseURL: API_BASE, timeout: 15000 })
+
+/** Ochiq kuzatuv — faqat faol buyurtmalar (yakunlangan bo'lsa backend 410 qaytaradi) */
+export async function fetchPublicOrder(uuid: string): Promise<PublicOrderResult> {
+  try {
+    const res = await anonymous.get(`/orders/track/${encodeURIComponent(uuid)}/`, {
+      headers: { 'Accept-Language': 'uz' },
+    })
+    return { state: 'ok', order: { ...normalizeOrder(unwrap(res.data)), is_public: true } }
+  } catch (e) {
+    if (axios.isAxiosError(e)) {
+      if (e.response?.status === 410)
+        return { state: 'finished', status: String(e.response.data?.status || '') }
+      if (e.response?.status === 404) return { state: 'missing' }
+    }
+    throw e
+  }
+}
+
 export interface CreateOrderPayload {
   description: string
   address: string
@@ -160,9 +188,10 @@ export interface CreateOrderPayload {
   payment_method: 'CASH'
   latitude: string
   longitude: string
+  /** Narxni server hisoblaydi; `options` — tanlangan opsiya uuid'lari */
   items: (
-    | { product_uuid: string; quantity: number; price_at_time_of_order: number }
-    | { set: string; quantity: number }
+    | { product_uuid: string; quantity: number; options?: string[] }
+    | { set: string; quantity: number; options?: string[] }
   )[]
 }
 
@@ -288,4 +317,68 @@ export async function loginWithTelegramCode(code: string, deviceId?: string) {
     headers: deviceId ? { 'X-Device-Id': deviceId } : undefined,
   })
   return extractTokens(res)
+}
+
+// ── Bildirishnomalar (headerdagi qo'ng'iroqcha) ────────────────────────────────
+export async function fetchNotifications(
+  params: { unread?: boolean; limit?: number; offset?: number } = {}
+): Promise<NotificationsPage> {
+  const res = await request({
+    url: '/notifications/',
+    method: 'get',
+    params: { ...params, unread: params.unread ? 'true' : undefined },
+  })
+  return normalizeNotificationsPage(res)
+}
+
+export async function fetchUnreadCount(): Promise<number> {
+  const res = await request({ url: '/notifications/unread-count/', method: 'get' })
+  return toNum(unwrap<any>(res)?.unread_count)
+}
+
+export async function markNotificationRead(uuid: string): Promise<void> {
+  await request({ url: `/notifications/${uuid}/read/`, method: 'post', data: {} })
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  await request({ url: '/notifications/read-all/', method: 'post', data: {} })
+}
+
+export async function deleteNotification(uuid: string): Promise<void> {
+  await request({ url: `/notifications/${uuid}/`, method: 'delete' })
+}
+
+/** Qurilma (brauzer) FCM tokenini ro'yxatdan o'tkazish — ilova yopiq bo'lsa ham push borishi uchun */
+export async function registerPushDevice(registration_id: string): Promise<void> {
+  await request({
+    url: '/notifications/devices/register/',
+    method: 'post',
+    data: { registration_id, device_type: 'WEB' },
+  })
+}
+
+/** SMS orqali kirish: kod O'zbekiston raqamiga yuboriladi; raqam bazada bo'lmasa tasdiqlangach hisob ochiladi */
+export async function sendSmsCode(phone: string) {
+  return request({
+    url: '/auth/user/send-otp/',
+    method: 'post',
+    data: { phone_number: phone, channel: 'sms' },
+  })
+}
+
+export async function loginWithSmsCode(phone: string, code: string, deviceId?: string) {
+  const res = await request({
+    url: '/auth/user/verify-otp/',
+    method: 'post',
+    data: { phone_number: phone, otp_code: code },
+    headers: deviceId ? { 'X-Device-Id': deviceId } : undefined,
+  })
+  return extractTokens(res)
+}
+
+/** Serverdan kelgan xato matni (DRF `message`/`detail`/maydon xatosi) yoki zaxira matn */
+export function apiErrorMessage(e: unknown, fallback: string): string {
+  const d = (e as any)?.response?.data
+  const v = d?.message || d?.detail || d?.phone_number?.[0] || d?.otp_code?.[0]
+  return typeof v === 'string' ? v : fallback
 }

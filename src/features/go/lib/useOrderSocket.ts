@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
+import { WS_BASE } from '@/constants/env'
 import { normalizeCourier } from './normalize'
 import type { Order } from './types'
 
@@ -26,7 +27,7 @@ export function useOrderSocket(uuid: string | undefined, enabled: boolean) {
       const token = localStorage.getItem('access_token') || ''
       try {
         ws = new WebSocket(
-          `wss://mytizim.uz/ws/order/${uuid}/${token ? `?token=${encodeURIComponent(token)}` : ''}`
+          `${WS_BASE}/ws/order/${uuid}/${token ? `?token=${encodeURIComponent(token)}` : ''}`
         )
       } catch {
         return

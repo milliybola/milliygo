@@ -1,52 +1,17 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import FoodHeader from '../components/FoodHeader'
 import { FoodRestaurantCard, StoreListCard } from '../components/FoodRestaurantCard'
 import PromoCarousel from '../components/PromoCarousel'
+import PartnerFilterBar, { usePartnerFilters } from '../components/PartnerFilterBar'
 import { useBanners, useBaseCategories, usePartners } from '../lib/queries'
 import { useUi, useUserLocation } from '../lib/session'
 import type { BaseCategory, PartnerType } from '../lib/types'
-import { cx, isOutOfZone, workingHoursLabel, zoneFor } from '../lib/utils'
-import {
-  IconBolt,
-  IconCheck,
-  IconChevronDown,
-  IconClose,
-  IconMoon,
-  IconPin,
-  IconSearch,
-  IconSliders,
-  IconStar,
-  IconTag,
-} from '../ui/icons'
+import { cx, isOutOfZone } from '../lib/utils'
+import { IconCheck, IconChevronDown, IconPin, IconSearch, IconSliders } from '../ui/icons'
 import { Button, EmptyState, Img, Page, Skeleton } from '../ui/primitives'
 import { sortPartners } from '../components/PartnerCard'
-
-type FilterKey = 'fast' | 'allday' | 'top' | 'promo'
-
-const FILTERS: { key: FilterKey; label: string; icon: (on: boolean) => ReactNode }[] = [
-  {
-    key: 'fast',
-    label: '30 daqiqagacha',
-    icon: (on) => <IconBolt size={17} className={on ? '' : 'text-[#1F2937]'} />,
-  },
-  {
-    key: 'allday',
-    label: 'Tun-u kun',
-    icon: (on) => <IconMoon size={17} className={on ? '' : 'text-[#1F2937]'} />,
-  },
-  {
-    key: 'top',
-    label: 'Reyting 4.5+',
-    icon: (on) => <IconStar size={17} className={on ? '' : 'text-go-gold'} />,
-  },
-  {
-    key: 'promo',
-    label: 'Aksiya',
-    icon: (on) => <IconTag size={17} className={on ? '' : 'text-[#1F2937]'} />,
-  },
-]
 
 /** Superapp `_FoodSearchField`: och kulrang maydon — lupa + matn + filtr belgisi */
 function SearchField({ hint }: { hint: string }) {
@@ -198,17 +163,14 @@ export default function PartnersListPage({ type }: { type: PartnerType }) {
   const pickup = !isShop && router.query.mode === 'pickup'
   const { lat, lng, hasLocation } = useUserLocation()
   const setLocationOpen = useUi((s) => s.setLocationOpen)
-  const partnersQ = usePartners(type)
+  const [cat, setCat] = useState<string | null>(null)
+  // Filtrlar serverda qo'llanadi (GET /partner/?fast=true&promo=true...); olib ketishda filtr yo'q
+  const { filters, setFilters, toggle, serverFilters, hasActive } = usePartnerFilters(pickup)
+  const partnersQ = usePartners(type, undefined, serverFilters)
   const bannersQ = useBanners(type)
   const catsQ = useBaseCategories(type)
-  const [cat, setCat] = useState<string | null>(null)
-  const [filters, setFilters] = useState<FilterKey[]>([])
 
   const banners = useMemo(() => bannersQ.data || [], [bannersQ.data])
-  const promoIds = useMemo(
-    () => new Set(banners.map((b) => b.partner?.uuid).filter(Boolean) as string[]),
-    [banners]
-  )
   const categories = useMemo(() => catsQ.data || [], [catsQ.data])
   const all = useMemo(() => partnersQ.data || [], [partnersQ.data])
 
@@ -223,25 +185,12 @@ export default function PartnersListPage({ type }: { type: PartnerType }) {
       const ids = new Set(categories.find((c) => c.uuid === cat)?.partner_uuids || [])
       l = l.filter((p) => ids.has(p.uuid))
     }
-    for (const f of pickup ? [] : filters) {
-      if (f === 'fast') l = l.filter((p) => (zoneFor(p, lat, lng)?.estimated_minutes ?? 999) <= 30)
-      if (f === 'top') l = l.filter((p) => p.rating >= 4.5)
-      if (f === 'promo') l = l.filter((p) => promoIds.has(p.uuid))
-      if (f === 'allday')
-        l = l.filter((p) => {
-          const h = workingHoursLabel(p)
-          return !!h && (h === '00:00 - 23:59' || h === '00:00 - 00:00')
-        })
-    }
     return sortPartners(l, lat, lng, pickup)
-  }, [deliverable, cat, categories, filters, lat, lng, pickup, promoIds])
+  }, [deliverable, cat, categories, lat, lng, pickup])
 
-  const toggle = (f: FilterKey) =>
-    setFilters((s) => (s.includes(f) ? s.filter((x) => x !== f) : [...s, f]))
   const nobodyDelivers =
     !isShop && !pickup && hasLocation && all.length > 0 && deliverable.length === 0
   const title = isShop ? "Do'konlar" : pickup ? 'Olib ketishga' : 'Taomlar'
-  const hasActive = filters.length > 0
 
   return (
     <div className="pb-6">
@@ -305,39 +254,12 @@ export default function PartnersListPage({ type }: { type: PartnerType }) {
             isShop ? 'pt-2.5' : 'pt-3'
           )}
         >
-          <div className="no-scrollbar flex h-10 gap-2 overflow-x-auto px-4 lg:px-0">
-            <button
-              type="button"
-              aria-label={hasActive ? 'Filtrlarni tozalash' : 'Filtrlar'}
-              onClick={() => hasActive && setFilters([])}
-              className={cx(
-                'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-0 transition-colors',
-                hasActive
-                  ? 'cursor-pointer bg-go-green text-white'
-                  : 'cursor-default bg-[#F2F3F5] text-[#1F2937]'
-              )}
-            >
-              {hasActive ? <IconClose size={20} /> : <IconSliders size={20} />}
-            </button>
-            {FILTERS.map((f) => {
-              const on = filters.includes(f.key)
-              return (
-                <button
-                  key={f.key}
-                  type="button"
-                  onClick={() => toggle(f.key)}
-                  aria-pressed={on}
-                  className={cx(
-                    'flex h-10 shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-[20px] border-0 px-3.5 text-[0.844rem] font-[600] transition-colors',
-                    on ? 'bg-go-green text-white' : 'bg-[#F2F3F5] text-[#1F2937]'
-                  )}
-                >
-                  {f.icon(on)}
-                  {f.label}
-                </button>
-              )
-            })}
-          </div>
+          <PartnerFilterBar
+            filters={filters}
+            onToggle={toggle}
+            onReset={() => setFilters([])}
+            className="px-4 lg:px-0"
+          />
         </div>
       )}
 
@@ -382,9 +304,9 @@ export default function PartnersListPage({ type }: { type: PartnerType }) {
         ) : list.length === 0 ? (
           <div className="flex flex-col items-center px-8 py-10 text-center">
             <h3 className="m-0 text-[1.0625rem] font-[800] text-[#111]">
-              {all.length ? 'Mos maskan topilmadi' : 'Maskanlar topilmadi'}
+              {all.length || hasActive ? 'Mos maskan topilmadi' : 'Maskanlar topilmadi'}
             </h3>
-            {all.length > 0 && (
+            {(all.length > 0 || hasActive) && (
               <>
                 <p className="mb-3.5 mt-1 text-[0.844rem] text-[#6B7280]">
                   Tanlangan filtrlarni o&apos;zgartirib ko&apos;ring

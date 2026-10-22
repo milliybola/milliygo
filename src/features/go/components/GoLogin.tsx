@@ -1,3 +1,4 @@
+import { TELEGRAM_BOT_NAME, TELEGRAM_BOT_URL } from '@/constants/env'
 import { Input, message } from 'antd'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
@@ -5,14 +6,15 @@ import { fingerprint } from '@/utils/fingerprint'
 import { SUPPORT_TELEGRAM } from '../layout/GoFooter'
 import { loginWithTelegramCode } from '../lib/api'
 import { useCompleteLogin } from '../lib/session'
-import { IconLock, IconTelegram } from '../ui/icons'
+import { IconLock, IconPhone, IconTelegram } from '../ui/icons'
 import { Button } from '../ui/primitives'
+import GoSmsLogin from './GoSmsLogin'
 
-const BOT_URL = 'https://t.me/MilliyGoApp_bot'
+const BOT_URL = TELEGRAM_BOT_URL
 
 /** Telegram bot orqali kirish (superapp auth_page bilan bir xil oqim) */
 export default function GoLogin({ onDone }: { onDone?: () => void }) {
-  const [step, setStep] = useState<'start' | 'code'>('start')
+  const [step, setStep] = useState<'start' | 'code' | 'sms'>('start')
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
   const device = useRef<string>('')
@@ -44,6 +46,10 @@ export default function GoLogin({ onDone }: { onDone?: () => void }) {
     }
   }
 
+  if (step === 'sms') {
+    return <GoSmsLogin device={device} onBack={() => setStep('start')} onDone={onDone} />
+  }
+
   if (step === 'start') {
     return (
       <div className="flex flex-col items-center px-1 py-2 text-center">
@@ -73,6 +79,21 @@ export default function GoLogin({ onDone }: { onDone?: () => void }) {
         </button>
         <button
           type="button"
+          onClick={() => setStep('sms')}
+          className="mt-3 flex min-h-[60px] w-full cursor-pointer items-center gap-3 rounded-[18px] border border-solid border-go-line bg-white px-4 text-left text-go-ink hover:bg-go-chip"
+        >
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-go-chip">
+            <IconPhone size={20} />
+          </span>
+          <span className="flex-1">
+            <span className="block text-[1.0312rem] font-[800]">SMS</span>
+            <span className="block text-[0.8125rem] text-go-muted">
+              Telefon raqamingizga kod yuboramiz
+            </span>
+          </span>
+        </button>
+        <button
+          type="button"
           onClick={() => setStep('code')}
           className="mt-3 cursor-pointer border-0 bg-transparent text-[0.875rem] font-[700] text-go-green"
         >
@@ -98,7 +119,7 @@ export default function GoLogin({ onDone }: { onDone?: () => void }) {
         Telegram orqali tasdiqlash
       </h2>
       <p className="mb-0 mt-1 text-[0.9062rem] text-go-muted">
-        Telegram <b>@MilliyGoApp_bot</b> orqali yuborilgan 6 xonali maxfiy kodni kiriting
+        Telegram <b>@{TELEGRAM_BOT_NAME}</b> orqali yuborilgan 6 xonali maxfiy kodni kiriting
       </p>
       <ol className="mb-0 mt-4 space-y-1.5 rounded-[16px] bg-go-chip p-4 pl-8 text-[0.875rem] text-go-ink">
         <li>
@@ -109,7 +130,7 @@ export default function GoLogin({ onDone }: { onDone?: () => void }) {
             rel="noopener noreferrer"
             className="font-[800] text-[#229ED9]"
           >
-            @MilliyGoApp_bot
+            @{TELEGRAM_BOT_NAME}
           </a>
         </li>
         <li>

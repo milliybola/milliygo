@@ -230,15 +230,20 @@ export default function RestaurantPage() {
     const promos = promosQ.data?.data || []
     const byProduct = new Map<string, (typeof promos)[number]>()
     promos.forEach((pr) => pr.products.forEach((pid) => byProduct.set(pid, pr)))
+    // Setlar (kind=SET) "Setlar" bo'limida ko'rsatiladi — menyuda ikkinchi marta chiqmasligi uchun
+    // (bo'lim ishlamay qolsa, set oddiy mahsulot sifatida menyuda qoladi)
+    const hideSets = !!setsQ.data?.available
     return (menuQ.data?.categories || [])
       .map((c) => ({
         ...c,
-        products: c.products.map((p) =>
-          p.promotion || !byProduct.has(p.uuid) ? p : { ...p, promotion: byProduct.get(p.uuid)! }
-        ),
+        products: c.products
+          .filter((p) => !(hideSets && p.kind === 'SET'))
+          .map((p) =>
+            p.promotion || !byProduct.has(p.uuid) ? p : { ...p, promotion: byProduct.get(p.uuid)! }
+          ),
       }))
       .filter((c) => c.products.length > 0)
-  }, [menuQ.data, promosQ.data])
+  }, [menuQ.data, promosQ.data, setsQ.data?.available])
 
   const allProducts = useMemo(() => categories.flatMap((c) => c.products), [categories])
   const deals = allProducts.filter((p) => p.promotion || p.discount > 0)
@@ -317,7 +322,7 @@ export default function RestaurantPage() {
     }
   }
 
-  const grid = 'grid grid-cols-2 gap-x-3 gap-y-[18px] sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'
+  const grid = 'grid grid-cols-2 gap-x-3 gap-y-[18px] sm:grid-cols-3 lg:grid-cols-4'
   const sectionTitle = 'm-0 mb-3 text-[1.625rem] font-[900] tracking-[-0.6px] text-[#111]'
 
   return (
@@ -460,7 +465,7 @@ export default function RestaurantPage() {
                   <h2 className={sectionTitle}>Setlar</h2>
                 </Page>
                 <div className="mx-auto w-full max-w-[720px] lg:max-w-[1180px] lg:px-6">
-                  <div className="no-scrollbar flex gap-3 overflow-x-auto px-4 pb-1 lg:px-0">
+                  <div className="no-scrollbar flex gap-3 overflow-x-auto px-4 pb-1 lg:grid lg:grid-cols-4 lg:gap-4 lg:overflow-visible lg:px-0">
                     {sets.map((s) => (
                       <SetCard
                         key={s.uuid}

@@ -201,11 +201,15 @@ export default function CheckoutPage() {
       payment_method: 'CASH',
       latitude: clientLat != null ? clientLat.toFixed(6) : '',
       longitude: clientLng != null ? clientLng.toFixed(6) : '',
-      items: cart.lines.map((l) =>
-        l.kind === 'set'
-          ? { set: l.uuid, quantity: l.quantity }
-          : { product_uuid: l.uuid, quantity: l.quantity, price_at_time_of_order: l.price }
-      ),
+      // Narxni server qayta hisoblaydi (chegirma, opsiyalar, 1+1/2+1); biz faqat tanlovni yuboramiz
+      items: cart.lines.map((l) => {
+        const options = l.options?.length ? { options: l.options.map((o) => o.uuid) } : {}
+        // Qadoq (quti) tanlangan bo'lsa — uning uuid'si; `quantity` kg uchun kasr bo'lishi mumkin
+        const packaging = l.packaging ? { packaging: l.packaging.uuid } : {}
+        return l.kind === 'set'
+          ? { set: l.uuid, quantity: l.quantity, ...options, ...packaging }
+          : { product_uuid: l.uuid, quantity: l.quantity, ...options, ...packaging }
+      }),
     }
 
     Modal.confirm({

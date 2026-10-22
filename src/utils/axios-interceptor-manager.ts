@@ -2,6 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { getCookie, deleteCookie } from 'cookies-next'
 import { getErrorMessage } from '../helpers/get-error-message'
 import { notification } from 'antd'
+import { TOKEN_REFRESH_URL } from '@/constants/env'
 
 const hostname = typeof window !== 'undefined' ? window.location.hostname : ''
 
@@ -9,7 +10,7 @@ const hostname = typeof window !== 'undefined' ? window.location.hostname : ''
 const REFRESH_URL =
   hostname === 'sayohat.uz'
     ? 'https://back.sayohat.uz/auth/api/v1/account/me/refresh/'
-    : 'https://mytizim.uz/api/token/refresh/'
+    : TOKEN_REFRESH_URL
 
 let refreshTokenPromise: Promise<string> | null = null
 

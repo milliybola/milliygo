@@ -3,15 +3,21 @@ import type {
   Courier,
   DeliveryZone,
   MenuCategory,
+  NotificationsPage,
   Order,
   OrderItem,
   Partner,
   Product,
+  ProductOption,
+  ProductOptionGroup,
+  ProductPackaging,
   ProductSet,
+  ProductUnit,
   PromoBanner,
   Promotion,
   PromotionShort,
   UserAddress,
+  UserNotification,
   UserProfile,
 } from './types'
 import { absUrl, cleanText, parseApiDate, toNum, toNumOrNull } from './utils'
@@ -86,9 +92,14 @@ export function normalizePartner(j: any): Partner {
     min_order_amount: toNum(j?.min_order_amount),
     free_delivery_threshold: toNum(j?.free_delivery_threshold),
     delivery_fee: toNum(j?.delivery_fee),
+    delivery_time_minutes: toNumOrNull(j?.delivery_time_minutes),
     delivery_zones: (Array.isArray(j?.delivery_zones) ? j.delivery_zones : [])
       .map(normalizeZone)
       .filter(Boolean) as DeliveryZone[],
+    cuisines: (Array.isArray(j?.cuisines) ? j.cuisines : [])
+      .map((c: any) => ({ uuid: String(c?.uuid ?? ''), name: cleanText(c?.name) ?? '' }))
+      .filter((c: { name: string }) => c.name),
+    created_at: j?.created_at ? String(j.created_at) : null,
   }
 }
 
@@ -122,19 +133,48 @@ export function normalizePromotion(p: any): Promotion | null {
   }
 }
 
+export function normalizeOptionGroups(raw: any): ProductOptionGroup[] {
+  return (Array.isArray(raw) ? raw : [])
+    .map((g: any): ProductOptionGroup | null => {
+      const options: ProductOption[] = (Array.isArray(g?.options) ? g.options : [])
+        .filter((o: any) => o && o.uuid)
+        .map((o: any) => ({
+          uuid: String(o.uuid),
+          name: String(o.name ?? ''),
+          price_delta: Math.max(0, toNum(o.price_delta)),
+          is_available: o.is_available !== false,
+        }))
+      if (!g?.uuid || !options.length) return null
+      const max = Math.max(1, parseInt(g.max_select, 10) || 1)
+      return {
+        uuid: String(g.uuid),
+        name: String(g.name ?? ''),
+        min_select: Math.min(max, Math.max(0, parseInt(g.min_select, 10) || 0)),
+        max_select: max,
+        options,
+      }
+    })
+    .filter(Boolean) as ProductOptionGroup[]
+}
+
 export function normalizeProduct(j: any, categoryUuid?: string): Product {
   const price = toNum(j?.price)
   const discount = Math.max(0, Math.round(toNum(j?.discount)))
   const sale = toNumOrNull(j?.sale_price)
+  const serverFinal = toNumOrNull(j?.final_price)
   let final = price
-  // Superapp `finalPrice`: sale_price > 0 → u; aks holda discount %
-  if (sale !== null && sale > 0) final = sale
+  // Server hisoblagan yakuniy narx (filial narxi hisobga olingan) ustun; yo'q bo'lsa superapp `finalPrice`:
+  // sale_price > 0 → u; aks holda discount %
+  if (serverFinal !== null && serverFinal > 0) final = Math.round(serverFinal)
+  else if (sale !== null && sale > 0) final = sale
   else if (discount > 0) final = Math.round((price * (100 - discount)) / 100)
   const images: string[] = (Array.isArray(j?.images) ? j.images : [])
     .filter((im: any) => im && im.is_active !== false)
     .map((im: any) => absUrl(im?.image))
     .filter(Boolean)
   const main = absUrl(j?.main_image) || images[0] || null
+  const unit: ProductUnit = j?.unit === 'KG' ? 'KG' : 'PIECE'
+  const step = toNum(j?.step) > 0 ? toNum(j?.step) : 1
   return {
     uuid: String(j?.uuid ?? j?.id ?? ''),
     id: j?.id,
@@ -148,7 +188,27 @@ export function normalizeProduct(j: any, categoryUuid?: string): Product {
     is_available: j?.is_available !== false && j?.is_active !== false,
     category_uuid: categoryUuid,
     promotion: normalizePromotionShort(j?.promotion),
+    kind: j?.kind === 'SET' ? 'SET' : 'SINGLE',
+    option_groups: normalizeOptionGroups(j?.option_groups),
+    unit,
+    step,
+    min_quantity: Math.max(step, toNum(j?.min_quantity) || step),
+    barcode: cleanText(j?.barcode) ?? undefined,
+    brand: cleanText(j?.brand) ?? undefined,
+    packagings: normalizePackagings(j?.packagings),
+    stock_quantity: toNumOrNull(j?.stock_quantity),
   }
+}
+
+export function normalizePackagings(raw: any): ProductPackaging[] {
+  return (Array.isArray(raw) ? raw : [])
+    .filter((p: any) => p && p.uuid && toNum(p.multiplier) > 0)
+    .map((p: any) => ({
+      uuid: String(p.uuid),
+      name: String(p.name ?? 'Quti'),
+      multiplier: toNum(p.multiplier),
+      price: Math.round(toNum(p.price)),
+    }))
 }
 
 export function normalizeSet(j: any): ProductSet | null {
@@ -169,6 +229,7 @@ export function normalizeSet(j: any): ProductSet | null {
         image: absUrl(x.image),
         quantity: Math.max(1, parseInt(x.quantity, 10) || 1),
       })),
+    option_groups: normalizeOptionGroups(j.option_groups),
     is_active: j.is_active !== false,
     start_date: j.start_date ?? null,
     end_date: j.end_date ?? null,
@@ -289,9 +350,26 @@ export function normalizeOrder(j: any): Order {
       uuid: String(i?.uuid ?? p.uuid ?? Math.random()),
       name: str(p.name) || str(i?.name) || str(i?.product_name) || (i?.set ? 'Set' : 'Mahsulot'),
       image: img,
-      quantity: parseInt(i?.quantity, 10) || 1,
+      // kg uchun kasr (1.5), shuning uchun parseFloat
+      quantity: toNum(i?.quantity) || 1,
+      unit: (p.unit === 'KG' || i?.unit === 'KG' ? 'KG' : 'PIECE') as ProductUnit,
+      packaging_name: str(i?.packaging_name) || '',
+      packaging_uuid: str(i?.packaging_uuid),
+      pack_multiplier: toNum(i?.pack_multiplier) || 1,
       price: toNum(i?.price_at_time_of_order ?? p.price),
       free_quantity: toNumOrNull(i?.free_quantity),
+      line_total:
+        toNumOrNull(i?.line_total) ??
+        Math.round(
+          toNum(i?.price_at_time_of_order ?? p.price) *
+            Math.max(0, (toNum(i?.quantity) || 1) - (toNumOrNull(i?.free_quantity) || 0))
+        ),
+      options: (Array.isArray(i?.options) ? i.options : []).map((o: any) => ({
+        uuid: String(o?.option_uuid ?? ''),
+        group_name: String(o?.group_name ?? ''),
+        name: String(o?.name ?? ''),
+        price_delta: toNum(o?.price_delta),
+      })),
     }
   })
   // Hamkor turi: mahsulot → partner → partner_type
@@ -383,5 +461,28 @@ export function normalizeSearchProduct(p: any) {
       ? 'SHOP'
       : 'RESTAURANT') as 'SHOP' | 'RESTAURANT',
     partner_logo: absUrl(p?.partner_logo),
+  }
+}
+
+export function normalizeNotification(j: any): UserNotification {
+  const type = ['ORDER_STATUS', 'PROMO', 'SYSTEM'].includes(j?.type) ? j.type : 'SYSTEM'
+  return {
+    uuid: String(j?.uuid ?? ''),
+    type,
+    title: String(j?.title ?? ''),
+    body: String(j?.body ?? ''),
+    data: j?.data && typeof j.data === 'object' ? j.data : {},
+    is_read: j?.is_read === true,
+    created_at: parseApiDate(j?.created_at),
+  }
+}
+
+export function normalizeNotificationsPage(body: any): NotificationsPage {
+  const d = unwrap<any>(body) || {}
+  return {
+    count: toNum(d.count),
+    unread_count: toNum(d.unread_count),
+    next_offset: typeof d.next_offset === 'number' ? d.next_offset : null,
+    results: (Array.isArray(d.results) ? d.results : []).map(normalizeNotification),
   }
 }

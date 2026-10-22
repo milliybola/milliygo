@@ -1,6 +1,7 @@
 import type { CartLine, DeliveryZone, OpeningHours, Partner, PromotionShort } from './types'
 
-export const API_BASE = 'https://mytizim.uz'
+export { API_BASE } from '@/constants/env'
+import { API_BASE as _API } from '@/constants/env'
 
 /** 12345 → "12 345" */
 export function formatSum(value: number | null | undefined): string {
@@ -32,9 +33,11 @@ export function cleanText(v: any): string | null {
 export function absUrl(u: any): string | null {
   const s = cleanText(u)
   if (!s) return null
-  if (s.startsWith('http://')) return s.replace('http://', 'https://')
+  // Mixed-content uchun http → https, lekin lokal backend (localhost) HTTPS'ni bilmaydi
+  if (s.startsWith('http://') && !/^http:\/\/(localhost|127\.0\.0\.1)(:|\/|$)/.test(s))
+    return s.replace('http://', 'https://')
   if (s.startsWith('http')) return s
-  return `${API_BASE}${s.startsWith('/') ? '' : '/'}${s}`
+  return `${_API}${s.startsWith('/') ? '' : '/'}${s}`
 }
 
 /**
@@ -55,6 +58,22 @@ export function parseApiDate(raw: any): Date | null {
   }
   const d = new Date(s)
   return Number.isNaN(d.getTime()) ? null : d
+}
+
+/** Maskan yaqinda qo'shilganmi ("Yangi" belgisi): created_at dan beri `days` kundan oshmagan */
+export function isNewPartner(p: { created_at?: string | null }, days = 14): boolean {
+  const d = parseApiDate(p.created_at)
+  if (!d) return false
+  const age = Date.now() - d.getTime()
+  return age >= 0 && age <= days * 86_400_000
+}
+
+/** "Fastfud, Pitsa, Amerika" */
+export function cuisineLabel(p: { cuisines?: { name: string }[] }, max = 3): string {
+  return (p.cuisines || [])
+    .slice(0, max)
+    .map((c) => c.name)
+    .join(', ')
 }
 
 /** Aksiya/banner sana oralig'ida amaldami (end_date — kun oxirigacha) */
@@ -202,14 +221,36 @@ export function freeCount(qty: number, p?: PromotionShort | null): number {
   return Math.floor(qty / (p.buy_quantity + p.get_quantity)) * p.get_quantity
 }
 
+/** Kasr miqdorlar (0.1 + 0.2) suzuvchi nuqta xatosiz: 3 xonagacha yaxlitlanadi */
+export function roundQty(n: number): number {
+  return Math.round(n * 1000) / 1000
+}
+
+/** Miqdor matni: dona — "3", kg — "1.5 kg" */
+export function formatQty(qty: number, unit?: 'PIECE' | 'KG'): string {
+  const text = String(roundQty(qty))
+  return unit === 'KG' ? `${text} kg` : text
+}
+
+/** Savat/buyurtma qatoridagi miqdor: "1.5 kg", "2 × Quti", "3" */
+export function qtyLabel(q: {
+  quantity: number
+  unit?: 'PIECE' | 'KG'
+  packaging_name?: string | null
+}): string {
+  if (q.packaging_name) return `${roundQty(q.quantity)} × ${q.packaging_name}`
+  return formatQty(q.quantity, q.unit)
+}
+
+/** Qator summasi so'mgacha yaxlitlanadi (server ham shunday: kg kabi kasr miqdorlar uchun) */
 export function lineTotal(l: CartLine): number {
-  return (l.quantity - freeCount(l.quantity, l.promotion)) * l.price
+  return Math.round((l.quantity - freeCount(l.quantity, l.promotion)) * l.price)
 }
 
 export function lineSaving(l: CartLine): number {
   const free = freeCount(l.quantity, l.promotion) * l.price
   const sale = l.old_price && l.old_price > l.price ? (l.old_price - l.price) * l.quantity : 0
-  return free + sale
+  return Math.round(free + sale)
 }
 
 /** Savat qatori ostidagi izoh: "1+1 aksiya · 2 tasi bepul" */
@@ -242,4 +283,20 @@ export function digits(s: string | null | undefined) {
 
 export function cx(...a: (string | false | null | undefined)[]) {
   return a.filter(Boolean).join(' ')
+}
+
+/** "hozir", "5 daqiqa oldin", "2 soat oldin", "kecha", "3 kun oldin", aks holda sana */
+export function timeAgo(date: Date | null | undefined, now: Date = new Date()): string {
+  if (!date) return ''
+  const sec = Math.max(0, Math.round((now.getTime() - date.getTime()) / 1000))
+  if (sec < 60) return 'hozir'
+  const min = Math.floor(sec / 60)
+  if (min < 60) return `${min} daqiqa oldin`
+  const hours = Math.floor(min / 60)
+  if (hours < 24) return `${hours} soat oldin`
+  const days = Math.floor(hours / 24)
+  if (days === 1) return 'kecha'
+  if (days < 7) return `${days} kun oldin`
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()}`
 }

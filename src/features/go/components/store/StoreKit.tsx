@@ -1,11 +1,20 @@
 import { Input, message } from 'antd'
 import Link from 'next/link'
 import { useMemo, useState, type ReactNode } from 'react'
-import { cartSubtotal, productLine, useCart, useLineQty } from '../../lib/cart'
+import {
+  cartSubtotal,
+  decreaseProduct,
+  hasOptionGroups,
+  nextQty,
+  productLine,
+  useCart,
+  useLineQty,
+  useProductQty,
+} from '../../lib/cart'
 import { useFavorite } from '../../lib/favorites'
 import { useHydrated } from '../../lib/session'
 import type { MenuCategory, Partner, Product } from '../../lib/types'
-import { cx, dealLabel, etaRange, formatSum, isOpenNow, zoneFor } from '../../lib/utils'
+import { cx, dealLabel, etaRange, formatQty, formatSum, isOpenNow, zoneFor } from '../../lib/utils'
 import {
   IconArrowRight,
   IconBack,
@@ -22,6 +31,7 @@ import {
 } from '../../ui/icons'
 import { Sheet } from '../../ui/primitives'
 import DeliveryProgressPanel from '../DeliveryProgressPanel'
+import OptionGroups, { useOptionSelection } from '../OptionGroups'
 
 /*
  * Superapp `lib/features/store/store_detail_page.dart` ning 1:1 veb nusxasi.
@@ -342,10 +352,13 @@ function RoundAdd({ onClick }: { onClick: () => void }) {
 /** Oq "− N +" pilyula (38px) */
 function PillStepper({
   count,
+  unit,
   onDec,
   onInc,
 }: {
   count: number
+  /** kg bo'lsa miqdor "1.5 kg" ko'rinishida */
+  unit?: 'PIECE' | 'KG'
   onDec: () => void
   onInc: () => void
 }) {
@@ -368,7 +381,9 @@ function PillStepper({
       className="flex h-[38px] w-full items-center rounded-full bg-white shadow-[0_1px_4px_rgba(0,0,0,0.22)]"
     >
       {btn(<IconMinus size={22} />, onDec, 'Kamaytirish')}
-      <span className="flex-1 text-center text-[0.9375rem] font-[800] text-[#111]">{count}</span>
+      <span className="flex-1 text-center text-[0.9375rem] font-[800] text-[#111]">
+        {formatQty(count, unit)}
+      </span>
       {btn(<IconPlus size={22} />, onInc, "Ko'paytirish")}
     </div>
   )
@@ -388,17 +403,34 @@ export function StoreProductCard({
   onOpen: (p: Product) => void
 }) {
   const line = productLine(product)
-  const count = useLineQty(partner.uuid, line.key)
+  // Opsiya yoki qadoq (quti) tanlanadigan mahsulot: "+" oynani ochadi, son — barcha variantlar yig'indisi
+  const withOptions = hasOptionGroups(product) || product.packagings.length > 0
+  const plainCount = useLineQty(partner.uuid, line.key)
+  const totalCount = useProductQty(partner.uuid, product.uuid)
+  const count = withOptions ? totalCount : plainCount
   const setQty = useCart((s) => s.setQty)
   const guard = useAddGuard(partner)
   const sale = hasSale(product)
   const badge = discountLabel(product)
   const deal = dealLabel(product.promotion)
   const unavailable = !product.is_available
+  const lowStock =
+    product.stock_quantity != null && product.stock_quantity > 0 && product.stock_quantity <= 5
 
-  const setCount = (n: number) => {
-    if (n > count && !guard()) return
-    setQty(partner, line, n)
+  // dir: +1 / −1; qadam mahsulotga bog'liq (dona 1, kg masalan 0.1), qoldiqdan oshmaydi
+  const change = (dir: 1 | -1) => {
+    if (withOptions) {
+      if (dir > 0) onOpen(product)
+      else decreaseProduct(partner, product.uuid)
+      return
+    }
+    if (dir > 0 && !guard()) return
+    const next = nextQty(line, count, dir)
+    if (next === null) {
+      message.warning(`Faqat ${formatQty(line.max_quantity ?? 0, product.unit)} qoldi`)
+      return
+    }
+    setQty(partner, line, next)
   }
 
   return (
@@ -427,17 +459,18 @@ export function StoreProductCard({
         )}
         {unavailable ? (
           <div className="absolute inset-x-1.5 bottom-1.5 rounded-full bg-black/70 py-1 text-center text-[0.75rem] font-[700] text-white">
-            Mavjud emas
+            Tugagan
           </div>
         ) : (
           <div className={cx('absolute bottom-1.5 right-1.5', count > 0 && 'left-1.5')}>
             {count === 0 ? (
-              <RoundAdd onClick={() => setCount(1)} />
+              <RoundAdd onClick={() => change(1)} />
             ) : (
               <PillStepper
                 count={count}
-                onDec={() => setCount(count - 1)}
-                onInc={() => setCount(count + 1)}
+                unit={withOptions ? undefined : product.unit}
+                onDec={() => change(-1)}
+                onInc={() => change(1)}
               />
             )}
           </div>
@@ -448,6 +481,12 @@ export function StoreProductCard({
         style={{ color: sale ? S.sale : S.ink }}
       >
         {formatSum(product.final_price)} so&apos;m
+        {product.unit === 'KG' && (
+          <span className="text-[0.8125rem] font-[600]" style={{ color: S.muted }}>
+            {' '}
+            / kg
+          </span>
+        )}
       </div>
       {sale && (
         <div className="text-[0.781rem] line-through" style={{ color: S.muted }}>
@@ -462,6 +501,11 @@ export function StoreProductCard({
       >
         {product.name}
       </div>
+      {lowStock && (
+        <div className="mt-0.5 text-[0.75rem] font-[700] text-[#B45309]">
+          Faqat {formatQty(product.stock_quantity!, product.unit)} qoldi
+        </div>
+      )}
     </div>
   )
 }
@@ -639,9 +683,32 @@ function StoreProductBody({
   onClose: () => void
   onOpenProduct: (p: Product) => void
 }) {
-  const line = productLine(item)
+  const groups = item.option_groups
+  const hasGroups = groups.length > 0
+  const { picked, toggle, selected, valid, missing } = useOptionSelection(groups, item.uuid)
+  // Qadoq (quti) tanlovi mahsulot bilan birga eskiradi (boshqa mahsulot ochilsa — asosiy birlikka qaytadi)
+  const [packSel, setPackSel] = useState<{ key: string; uuid: string | null }>({
+    key: item.uuid,
+    uuid: null,
+  })
+  const pack =
+    (packSel.key === item.uuid && item.packagings.find((p) => p.uuid === packSel.uuid)) || null
+  const line = productLine(item, selected, pack)
   const count = useLineQty(partner.uuid, line.key)
+  const anyCount = useProductQty(partner.uuid, item.uuid)
   const setQty = useCart((s) => s.setQty)
+  const qtyShown = formatQty(count, pack ? undefined : item.unit)
+  // Qadam bo'yicha (kg 0.1, dona/quti 1); qoldiqdan oshmaydi
+  const bump = (dir: 1 | -1) => {
+    const next = nextQty(line, count, dir)
+    if (next === null) {
+      message.warning(
+        `Faqat ${formatQty(line.max_quantity ?? 0, pack ? undefined : item.unit)} qoldi`
+      )
+      return
+    }
+    setQty(partner, line, next)
+  }
   const open = isOpenNow(partner)
   const more = suggestions.filter((p) => p.uuid !== item.uuid).slice(0, 12)
   const desc = item.description.trim()
@@ -699,6 +766,51 @@ function StoreProductBody({
           <p className="m-0 mt-1 text-[0.875rem] leading-[1.4] text-[#4B5563]">{desc}</p>
         </div>
       )}
+      {item.stock_quantity != null && item.stock_quantity > 0 && item.stock_quantity <= 5 && (
+        <div className="px-4 pt-3 text-[0.9375rem] font-[800] text-[#B45309]">
+          Faqat {formatQty(item.stock_quantity, item.unit)} qoldi
+        </div>
+      )}
+      {item.packagings.length > 0 && item.is_available && (
+        <div className="px-4 pt-4">
+          <div className="text-[1rem] font-[800] text-[#111]">Qanday olasiz?</div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {[null, ...item.packagings].map((pk) => {
+              const on = (pk?.uuid ?? null) === (pack?.uuid ?? null)
+              const price = productLine(item, [], pk).price
+              return (
+                <button
+                  key={pk?.uuid ?? 'base'}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setPackSel({ key: item.uuid, uuid: pk?.uuid ?? null })}
+                  className="cursor-pointer rounded-[14px] border-2 border-solid px-3.5 py-2 text-left"
+                  style={{
+                    borderColor: on ? '#16A34A' : 'transparent',
+                    background: on ? '#F0FDF4' : S.tile,
+                  }}
+                >
+                  <span className="block text-[0.9375rem] font-[800] text-[#111]">
+                    {pk
+                      ? `${pk.name} · ${formatQty(pk.multiplier)} ${item.unit === 'KG' ? 'kg' : 'dona'}`
+                      : item.unit === 'KG'
+                        ? 'Kilogramm'
+                        : 'Dona'}
+                  </span>
+                  <span className="block text-[0.8125rem] font-[600]" style={{ color: S.muted }}>
+                    {formatSum(price)} so&apos;m{!pk && item.unit === 'KG' ? ' / kg' : ''}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+      {hasGroups && (
+        <div className="px-4">
+          <OptionGroups groups={groups} picked={picked} onToggle={toggle} />
+        </div>
+      )}
       {more.length > 0 && (
         <>
           <div className="px-4 pb-2.5 pt-[22px] text-[1.375rem] font-[900] tracking-[-0.4px] text-[#111]">
@@ -716,7 +828,7 @@ function StoreProductBody({
 
       {/* Pastki panel: narx + savatga qo'shish */}
       <div className="sticky bottom-0 mt-4 bg-white px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-3px_14px_rgba(0,0,0,0.06)]">
-        {count > 0 && (
+        {anyCount > 0 && (
           <div className="pointer-events-none absolute bottom-full right-4 mb-3">
             <span className="pointer-events-auto">
               <GoldCartButton partner={partner} compact />
@@ -726,11 +838,17 @@ function StoreProductBody({
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <div className="text-[1.5rem] font-[900]" style={{ color: sale ? S.sale : S.ink }}>
-              {formatSum(item.final_price)} so&apos;m
+              {formatSum(line.price)} so&apos;m
+              {item.unit === 'KG' && !pack && (
+                <span className="text-[0.9375rem] font-[600]" style={{ color: S.muted }}>
+                  {' '}
+                  / kg
+                </span>
+              )}
             </div>
             {sale && (
               <div className="text-[0.8125rem] line-through" style={{ color: S.muted }}>
-                {formatSum(item.price)} so&apos;m
+                {formatSum(line.old_price ?? item.price)} so&apos;m
               </div>
             )}
           </div>
@@ -747,12 +865,25 @@ function StoreProductBody({
                 className="flex h-full items-center justify-center rounded-[18px] font-[700]"
                 style={{ background: S.tile, color: S.muted }}
               >
-                Mavjud emas
+                Tugagan
               </div>
+            ) : hasGroups ? (
+              <button
+                type="button"
+                onClick={() =>
+                  valid
+                    ? bump(1)
+                    : message.warning(`«${missing?.name}» bo'yicha tanlovni to'ldiring`)
+                }
+                className="h-full w-full cursor-pointer rounded-[18px] border-0 text-[1rem] font-[800] text-[#111]"
+                style={{ background: valid ? S.gold : S.tile, opacity: valid ? 1 : 0.7 }}
+              >
+                {valid ? (count > 0 ? `Savatga (${qtyShown})` : 'Savatga') : 'Tanlang'}
+              </button>
             ) : count === 0 ? (
               <button
                 type="button"
-                onClick={() => setQty(partner, line, 1)}
+                onClick={() => bump(1)}
                 className="h-full w-full cursor-pointer rounded-[18px] border-0 text-[1rem] font-[800] text-[#111]"
                 style={{ background: S.gold }}
               >
@@ -766,18 +897,18 @@ function StoreProductBody({
                 <button
                   type="button"
                   aria-label="Kamaytirish"
-                  onClick={() => setQty(partner, line, count - 1)}
+                  onClick={() => bump(-1)}
                   className="flex h-12 w-12 cursor-pointer items-center justify-center border-0 bg-transparent text-[#111]"
                 >
                   <IconMinus size={24} />
                 </button>
                 <span className="flex-1 text-center text-[1.0625rem] font-[800] text-[#111]">
-                  {count}
+                  {qtyShown}
                 </span>
                 <button
                   type="button"
                   aria-label="Ko'paytirish"
-                  onClick={() => setQty(partner, line, count + 1)}
+                  onClick={() => bump(1)}
                   className="flex h-12 w-12 cursor-pointer items-center justify-center border-0 bg-transparent text-[#111]"
                 >
                   <IconPlus size={24} />

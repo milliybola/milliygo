@@ -7,7 +7,7 @@ import DeliveryProgressPanel from '../components/DeliveryProgressPanel'
 import { partnerHref } from '../components/PartnerCard'
 import ProductCard from '../components/ProductCard'
 import ProductSheet from '../components/ProductSheet'
-import { cartSaving, cartSubtotal, cartsOfType, useCart } from '../lib/cart'
+import { cartCount, cartSaving, cartSubtotal, cartsOfType, nextQty, useCart } from '../lib/cart'
 import { useMenu } from '../lib/queries'
 import { useQueryParam } from '../lib/route'
 import { useHydrated, useUserLocation } from '../lib/session'
@@ -19,6 +19,7 @@ import {
   etaRange,
   formatSum,
   isOpenNow,
+  formatQty,
   lineTotal,
   opensAtLabel,
   som,
@@ -49,10 +50,20 @@ const ChatIcon = ({ size = 23 }: { size?: number }) => (
 function LineRow({ cart, line, last }: { cart: PartnerCart; line: CartLine; last: boolean }) {
   const setQty = useCart((s) => s.setQty)
   const total = lineTotal(line)
-  const full =
+  const full = Math.round(
     (line.old_price && line.old_price > line.price ? line.old_price : line.price) * line.quantity
+  )
   const note = dealNote(line)
   const { quantity: _q, ...base } = line
+  // Kg qatorida "1.5 kg", qadoqda — qadoqlar soni
+  const unitForQty = line.packaging ? undefined : line.unit
+  const inc = () => {
+    const next = nextQty(line, line.quantity, 1)
+    if (next === null)
+      message.warning(`Faqat ${formatQty(line.max_quantity ?? 0, unitForQty)} qoldi`)
+    else change(next)
+  }
+  const dec = () => change(nextQty(line, line.quantity, -1) ?? line.quantity)
 
   const change = (qty: number) => {
     const previous = line.quantity
@@ -98,6 +109,22 @@ function LineRow({ cart, line, last }: { cart: PartnerCart; line: CartLine; last
             )}
             {line.name}
           </div>
+          {line.options?.length ? (
+            <div className="mt-0.5 line-clamp-2 text-[0.781rem] text-[#6B7280]">
+              {line.options.map((o) => o.name).join(', ')}
+            </div>
+          ) : null}
+          {line.unit === 'KG' && !line.packaging ? (
+            <div className="mt-0.5 text-[0.781rem] text-[#6B7280]">
+              {formatSum(line.price)} so&apos;m / kg
+            </div>
+          ) : null}
+          {line.packaging ? (
+            <div className="mt-0.5 text-[0.781rem] text-[#6B7280]">
+              1 {line.packaging.name.toLowerCase()} = {formatQty(line.packaging.multiplier)}{' '}
+              {line.unit === 'KG' ? 'kg' : 'dona'}
+            </div>
+          ) : null}
           <div className="mt-1 flex items-baseline gap-1.5">
             <span
               className={cx(
@@ -124,7 +151,7 @@ function LineRow({ cart, line, last }: { cart: PartnerCart; line: CartLine; last
           <button
             type="button"
             aria-label="Kamaytirish"
-            onClick={() => change(line.quantity - 1)}
+            onClick={dec}
             className="flex h-[46px] w-11 cursor-pointer items-center justify-center border-0 bg-transparent text-go-green"
           >
             <svg
@@ -141,15 +168,15 @@ function LineRow({ cart, line, last }: { cart: PartnerCart; line: CartLine; last
             </svg>
           </button>
           <span
-            className="w-[26px] text-center text-[1rem] font-[800] text-[#111]"
+            className="min-w-[26px] px-0.5 text-center text-[1rem] font-[800] text-[#111]"
             aria-live="polite"
           >
-            {line.quantity}
+            {formatQty(line.quantity, unitForQty)}
           </span>
           <button
             type="button"
             aria-label="Ko'paytirish"
-            onClick={() => change(line.quantity + 1)}
+            onClick={inc}
             className="flex h-[46px] w-11 cursor-pointer items-center justify-center border-0 bg-transparent text-go-green"
           >
             <svg
@@ -355,7 +382,7 @@ export default function CartPage() {
   const min = p?.min_order_amount || 0
   const belowMin = min > 0 && sum < min
   const eta = etaRange(zone?.estimated_minutes)
-  const count = cart ? cart.lines.reduce((s, l) => s + l.quantity, 0) : 0
+  const count = cartCount(cart)
 
   const goCheckout = () => {
     if (!cart || !p) return

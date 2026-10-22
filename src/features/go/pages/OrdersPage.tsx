@@ -9,8 +9,8 @@ import { normalizeProduct } from '../lib/normalize'
 import { useOrders } from '../lib/queries'
 import { useRequireLocation, useSession } from '../lib/session'
 import { isOrderActive, orderNumber, orderStatus } from '../lib/status'
-import type { Order, Partner } from '../lib/types'
-import { cx, som } from '../lib/utils'
+import type { Order, Partner, SelectedOption } from '../lib/types'
+import { cx, qtyLabel, som } from '../lib/utils'
 import { IconPhone, IconScooter, IconSearch, IconStore, IconWalk } from '../ui/icons'
 import { Button, EmptyState, Sheet, Skeleton } from '../ui/primitives'
 import Link from 'next/link'
@@ -86,7 +86,7 @@ function SpotlightCard({ o }: { o: Order }) {
         : st.tone === 'cancelled'
           ? 'bg-[#FEF2F2] text-[#DC2626]'
           : 'bg-[#ECFDF5] text-[#15803D]'
-  const itemsText = o.items.map((i) => `${i.quantity}× ${i.name}`).join(', ')
+  const itemsText = o.items.map((i) => `${qtyLabel(i)} ${i.name}`).join(', ')
   const c = o.courier
   const hasCourier = !pickup && !!c?.full_name
   const vehicle = [c?.vehicle_desc || c?.vehicle_type, c?.license_plate].filter(Boolean).join(' • ')
@@ -208,7 +208,7 @@ function HistoryCard({
     : done
       ? 'bg-[#ECFDF5] text-[#16A34A]'
       : 'bg-[#FFF7E6] text-[#B45309]'
-  const itemsText = o.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')
+  const itemsText = o.items.map((i) => `${qtyLabel(i)} ${i.name}`).join(', ')
   return (
     <div
       onClick={() => router.push(orderHref(o))}
@@ -441,11 +441,10 @@ function DetailsSheet({ o, onClose }: { o: Order | null; onClose: () => void }) 
           o.items.map((i) => (
             <div key={i.uuid} className="flex items-center justify-between gap-3 py-1.5">
               <span className="min-w-0 flex-1 text-[0.875rem] font-[700] text-[#4B5563]">
-                {i.quantity}x {i.name}
+                {qtyLabel(i)} {i.name}
+                {i.options.length ? ` (${i.options.map((o) => o.name).join(', ')})` : ''}
               </span>
-              <span className="text-[0.875rem] font-[800] text-[#1F2937]">
-                {som(i.price * i.quantity)}
-              </span>
+              <span className="text-[0.875rem] font-[800] text-[#1F2937]">{som(i.line_total)}</span>
             </div>
           ))
         )}
@@ -541,9 +540,29 @@ export default function OrdersPage() {
           )
         return
       }
-      products.forEach((i) =>
-        setQty(partner, productLine(normalizeProduct(i.product)), parseInt(i.quantity, 10) || 1)
-      )
+      products.forEach((i) => {
+        // Avvalgi buyurtmadagi tanlangan opsiyalar ham qaytariladi (o'chirilgan opsiya uuid'siz keladi)
+        const options: SelectedOption[] = (Array.isArray(i.options) ? i.options : [])
+          .filter((o: any) => o?.option_uuid)
+          .map((o: any) => ({
+            uuid: String(o.option_uuid),
+            group_name: String(o.group_name ?? ''),
+            name: String(o.name ?? ''),
+            price_delta: Number(o.price_delta) || 0,
+          }))
+        const product = normalizeProduct(i.product)
+        // Qadoq (quti) bilan olingan bo'lsa — o'sha qadoq; narxi buyurtmadagi birlik narxidan (menyu yangilanganda
+        // savatda qayta hisoblanadi)
+        const packaging = i.packaging_uuid
+          ? {
+              uuid: String(i.packaging_uuid),
+              name: String(i.packaging_name || 'Quti'),
+              multiplier: Number(i.pack_multiplier) || 1,
+              price: Math.round(Number(i.price_at_time_of_order) || 0),
+            }
+          : null
+        setQty(partner, productLine(product, options, packaging), Number(i.quantity) || 1)
+      })
       if (partner.partner_type === 'RESTAURANT') setMode(partner, o.delivery_type)
       message.success("Mahsulotlar savatga qo'shildi (narxlar joriy menyu bo'yicha yangilanadi)")
       router.push(`/cart/?partner=${partner.uuid}`)

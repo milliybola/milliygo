@@ -1,3 +1,4 @@
+import { TELEGRAM_BOT_NAME } from '@/constants/env'
 import Link from 'next/link'
 import { SUPPORT_PHONE, SUPPORT_PHONE_DISPLAY, SUPPORT_TELEGRAM } from '../layout/GoFooter'
 import { Card, Page } from '../ui/primitives'
@@ -59,7 +60,7 @@ const FAQ: { group: string; items: { q: string; a: string }[] }[] = [
     items: [
       {
         q: 'Qanday kiraman?',
-        a: 'Telegramdagi @MilliyGoApp_bot orqali olingan 6 xonali kod bilan kirasiz. Alohida parol shart emas.',
+        a: `Telegramdagi @${TELEGRAM_BOT_NAME} orqali olingan 6 xonali kod bilan kirasiz. Alohida parol shart emas.`,
       },
       {
         q: "Hisobimni qanday o'chiraman?",

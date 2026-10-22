@@ -1,9 +1,10 @@
 import Link from 'next/link'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { useNeighborhoods } from '@/hooks/useNeighborhoods'
 import { checkServiceArea } from '@/helpers/location-helper'
 import ActiveOrdersStrip from '../components/ActiveOrdersStrip'
 import InstructionStories from '../components/InstructionStories'
+import PartnerFilterBar, { usePartnerFilters } from '../components/PartnerFilterBar'
 import PartnerCard, { sortPartners } from '../components/PartnerCard'
 import PromoCarousel from '../components/PromoCarousel'
 import RateCourierPrompt from '../components/RateCourierPrompt'
@@ -17,22 +18,16 @@ import {
   IconArrowRight,
   IconBasket,
   IconBellRing,
-  IconBolt,
   IconChat,
   IconChevronRight,
-  IconGrid,
   IconPill,
   IconPin,
-  IconScooter,
   IconSearch,
   IconSliders,
-  IconStar,
   IconTaxi,
   IconTruck,
 } from '../ui/icons'
-import { Button, Chip, Notice, Page, SectionTitle, SeeAll, Skeleton } from '../ui/primitives'
-
-type Filter = 'all' | 'fast' | 'top' | 'free'
+import { Button, Notice, Page, SectionTitle, SeeAll, Skeleton } from '../ui/primitives'
 
 /** Ilovadagi xizmat kartasi: rasm, pastki chapda to'q matn, pastki o'ngda oq doirada rangli strelka */
 function ServiceCard({
@@ -88,6 +83,7 @@ function NearbySection({
   lat,
   lng,
   compact,
+  filterBar,
 }: {
   title: string
   partners: Partner[]
@@ -96,63 +92,22 @@ function NearbySection({
   lat: number | null
   lng: number | null
   compact?: boolean
+  /** Server filtrlar paneli (faqat restoranlar bo'limida) */
+  filterBar?: ReactNode
 }) {
-  const [filter, setFilter] = useState<Filter>('all')
-  const items = useMemo(() => {
-    let list = partners
-    if (filter === 'fast')
-      list = list.filter((p) => (zoneFor(p, lat, lng)?.estimated_minutes ?? 999) <= 30)
-    if (filter === 'top') list = list.filter((p) => p.rating >= 4.5)
-    if (filter === 'free') list = list.filter((p) => zoneFor(p, lat, lng)?.delivery_fee === 0)
-    return sortPartners(list, lat, lng).slice(0, compact ? 4 : 12)
-  }, [partners, filter, lat, lng, compact])
+  const items = useMemo(
+    () => sortPartners(partners, lat, lng).slice(0, compact ? 4 : 12),
+    [partners, lat, lng, compact]
+  )
 
-  if (!partners.length) return null
-  const hasLoc = lat != null && lng != null
+  if (!partners.length && !filterBar) return null
   return (
     <section className="mt-1.5 pb-2.5">
       <Page>
         <SectionTitle className="!mb-0.5" action={compact ? undefined : <SeeAll href={href} />}>
           {title}
         </SectionTitle>
-        {!compact && (
-          <div className="no-scrollbar -mx-4 mb-1.5 flex gap-2 overflow-x-auto px-4 pb-[5px] pt-[3px] lg:mx-0 lg:px-0">
-            <Chip
-              active={filter === 'all'}
-              onClick={() => setFilter('all')}
-              icon={<IconGrid size={16} className={filter === 'all' ? '' : 'text-go-green'} />}
-            >
-              Barchasi
-            </Chip>
-            {hasLoc && (
-              <Chip
-                active={filter === 'fast'}
-                onClick={() => setFilter('fast')}
-                icon={<IconBolt size={16} className={filter === 'fast' ? '' : 'text-go-red'} />}
-              >
-                Tez yetkazish
-              </Chip>
-            )}
-            <Chip
-              active={filter === 'top'}
-              onClick={() => setFilter('top')}
-              icon={<IconStar size={16} className={filter === 'top' ? '' : 'text-go-gold'} />}
-            >
-              Reyting yuqori
-            </Chip>
-            {hasLoc && (
-              <Chip
-                active={filter === 'free'}
-                onClick={() => setFilter('free')}
-                icon={
-                  <IconScooter size={16} className={filter === 'free' ? '' : 'text-go-green'} />
-                }
-              >
-                Bepul yetkazish
-              </Chip>
-            )}
-          </div>
-        )}
+        {filterBar && <div className="-mx-4 mb-1.5 pb-[5px] pt-[3px] lg:mx-0">{filterBar}</div>}
       </Page>
       {items.length === 0 ? (
         <Page>
@@ -239,6 +194,41 @@ function etaLabel(partners: Partner[], lat: number | null, lng: number | null) {
   const lo = Math.min(...mins)
   const hi = Math.max(...mins)
   return lo === hi ? `${lo} daq` : `${lo}-${hi} daq`
+}
+
+/** Restoranlar bo'limi: filtrlar /restaurants sahifasidagi bilan bir xil (server tomonda) */
+function RestaurantsNearby({
+  restaurants,
+  promoIds,
+  lat,
+  lng,
+}: {
+  restaurants: Partner[]
+  promoIds: Set<string>
+  lat: number | null
+  lng: number | null
+}) {
+  const { filters, setFilters, toggle, serverFilters, hasActive } = usePartnerFilters()
+  const filteredQ = usePartners('RESTAURANT', undefined, serverFilters)
+  const partners = hasActive ? filteredQ.data || [] : restaurants
+  return (
+    <NearbySection
+      title="Yaqin atrofdagi restoranlar"
+      partners={partners}
+      promoIds={promoIds}
+      href="/restaurants/"
+      lat={lat}
+      lng={lng}
+      filterBar={
+        <PartnerFilterBar
+          filters={filters}
+          onToggle={toggle}
+          onReset={() => setFilters([])}
+          className="px-4 lg:px-0"
+        />
+      }
+    />
+  )
 }
 
 export default function HomePage() {
@@ -375,14 +365,7 @@ export default function HomePage() {
               </Notice>
             </Page>
           )}
-          <NearbySection
-            title="Yaqin atrofdagi restoranlar"
-            partners={restaurants}
-            promoIds={promoIds}
-            href="/restaurants/"
-            lat={lat}
-            lng={lng}
-          />
+          <RestaurantsNearby restaurants={restaurants} promoIds={promoIds} lat={lat} lng={lng} />
           <NearbySection
             title="Do'konlar va marketlar"
             partners={shops}

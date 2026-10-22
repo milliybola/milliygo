@@ -2,10 +2,12 @@ import Link from 'next/link'
 import ApiGap from '@/components/common/ApiGap'
 import type { Partner } from '../lib/types'
 import {
+  cuisineLabel,
   cx,
   distanceKm,
   distanceLabel,
   etaRange,
+  isNewPartner,
   isOpenNow,
   isOutOfZone,
   opensAtLabel,
@@ -64,6 +66,8 @@ export default function PartnerCard({ partner: p, lat, lng, pickup, small, class
   const fee = zone ? (zone.delivery_fee ?? p.delivery_fee) : null
   const km = hasLoc && p.lat != null && p.lng != null ? distanceKm(lat!, lng!, p.lat, p.lng) : null
   const hours = workingHoursLabel(p)
+  const cuisines = cuisineLabel(p)
+  const isNew = open && isNewPartner(p)
 
   let line: React.ReactNode
   if (pickup) {
@@ -136,12 +140,21 @@ export default function PartnerCard({ partner: p, lat, lng, pickup, small, class
             </span>
           </div>
         )}
-        {!inactive && !pickup && zone && fee === 0 && (
-          <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-[8px] bg-go-bright py-[3px] pl-1.5 pr-2 text-[0.719rem] font-[700] text-white">
-            <IconScooter size={14} />
-            {small ? 'Bepul' : 'Bepul yetkazish'}
-          </span>
-        )}{' '}
+        {!inactive && (isNew || (!pickup && zone && fee === 0)) && (
+          <div className="absolute left-2.5 top-2.5 flex flex-col items-start gap-1.5">
+            {isNew && (
+              <span className="rounded-[8px] bg-gradient-to-br from-[#22C55E] to-[#15803D] px-2 py-[4px] text-[0.688rem] font-[800] uppercase leading-none tracking-[0.4px] text-white shadow-[0_2px_6px_rgba(0,0,0,0.18)]">
+                Yangi
+              </span>
+            )}
+            {!pickup && zone && fee === 0 && (
+              <span className="inline-flex items-center gap-1 rounded-[8px] bg-go-bright py-[3px] pl-1.5 pr-2 text-[0.719rem] font-[700] text-white">
+                <IconScooter size={14} />
+                {small ? 'Bepul' : 'Bepul yetkazish'}
+              </span>
+            )}
+          </div>
+        )}
       </div>
       <div className="mt-2 flex items-start gap-2">
         <span
@@ -159,7 +172,12 @@ export default function PartnerCard({ partner: p, lat, lng, pickup, small, class
           </span>
         )}
       </div>
-      <div className="mt-0.5 flex items-center gap-1.5 text-[0.875rem] text-[#374151]">{line}</div>
+      <div className="mt-0.5 flex items-center gap-1.5 text-[0.875rem] text-[#374151]">
+        <span className="flex min-w-0 shrink items-center gap-1.5">{line}</span>
+        {!small && cuisines && (
+          <span className="min-w-0 flex-1 truncate text-right text-[#6B7280]">{cuisines}</span>
+        )}
+      </div>
     </Link>
   )
 }

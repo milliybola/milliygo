@@ -1,9 +1,9 @@
-import { message } from 'antd'
 import { useYMaps } from '@pbe/react-yandex-maps'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useEffect, useRef } from 'react'
 import LocationPicker from '../components/LocationPicker'
+import NotificationBell from '../components/NotificationBell'
 import { checkServiceArea } from '@/helpers/location-helper'
 import { useNeighborhoods } from '@/hooks/useNeighborhoods'
 import { useLocationStore } from '@/store/useLocationStore'
@@ -12,7 +12,6 @@ import { useHydrated, useSession, useUi, useUserLocation } from '../lib/session'
 import { cx } from '../lib/utils'
 import { SUPPORT_PHONE, SUPPORT_PHONE_DISPLAY } from './GoFooter'
 import {
-  IconBell,
   IconCart,
   IconChevronDown,
   IconChevronRight,
@@ -154,10 +153,10 @@ function useTotalCartCount() {
   const carts = useCart((s) => s.carts)
   const hydrated = useHydrated()
   if (!hydrated) return 0
-  return [...cartsOfType(carts, 'RESTAURANT'), ...cartsOfType(carts, 'SHOP')].reduce(
-    (s, c) => s + cartCount(c),
-    0
-  )
+  // Har bir maskan (savat) 1 ta: nechta maskandan buyurtma yig'ilgan
+  return [...cartsOfType(carts, 'RESTAURANT'), ...cartsOfType(carts, 'SHOP')].filter(
+    (c) => cartCount(c) > 0
+  ).length
 }
 
 /** Birinchi kirishda: brauzer joylashuvi xizmat hududida bo'lsa — avtomatik manzil */
@@ -235,7 +234,7 @@ export default function GoHeader({ hideOnMobile }: { hideOnMobile?: boolean } = 
           <div className="ml-auto flex shrink-0 items-center gap-2 lg:ml-0 lg:gap-3">
             <Link
               href="/cart/"
-              aria-label={`Savat${count ? `, ${count} ta mahsulot` : ''}`}
+              aria-label={`Savat${count ? `, ${count} ta savat` : ''}`}
               className={cx(
                 'relative hidden h-11 items-center gap-2 rounded-full px-5 text-[0.938rem] font-[800] no-underline lg:flex',
                 count ? 'bg-go-gold text-go-ink' : 'bg-go-chip text-go-ink'
@@ -249,14 +248,7 @@ export default function GoHeader({ hideOnMobile }: { hideOnMobile?: boolean } = 
                 </span>
               )}
             </Link>
-            <button
-              type="button"
-              aria-label="Bildirishnomalar"
-              onClick={() => message.info("Bildirishnomalar tez orada qo'shiladi")}
-              className="flex h-[38px] w-[38px] cursor-pointer items-center justify-center rounded-full border-[1.2px] border-solid border-go-line2 bg-transparent text-[#1F2937] lg:hidden"
-            >
-              <IconBell size={19} />
-            </button>
+            <NotificationBell />
             {isAuthenticated ? (
               <Link
                 href="/profile/"

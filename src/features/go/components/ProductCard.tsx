@@ -1,5 +1,13 @@
 import { message } from 'antd'
-import { productLine, setLine, useCart, useLineQty } from '../lib/cart'
+import {
+  decreaseProduct,
+  hasOptionGroups,
+  productLine,
+  setLine,
+  useCart,
+  useLineQty,
+  useProductQty,
+} from '../lib/cart'
 import type { Partner, Product, ProductSet } from '../lib/types'
 import { cx, dealLabel, formatSum, som } from '../lib/utils'
 import { useRequireLocation } from '../lib/session'
@@ -10,9 +18,20 @@ export function DealBadges({ product, isSet }: { product?: Product; isSet?: bool
   const disc = product && product.discount > 0 ? product.discount : 0
   if (!deal && !disc && !isSet) return null
   return (
-    <div className="flex flex-col items-start gap-1">
-      {disc > 0 && <Badge tone="red">−{disc}%</Badge>}
-      {deal && <Badge tone="gold">{deal}</Badge>}
+    <div className="flex flex-col items-start gap-1.5">
+      {disc > 0 && (
+        <span className="rounded-[10px] bg-[#16A34A] px-2.5 py-1 text-[0.9375rem] font-[800] leading-none text-white shadow-[0_2px_6px_rgba(0,0,0,0.12)]">
+          −{disc}%
+        </span>
+      )}
+      {deal && (
+        <span className="inline-flex flex-col items-center rounded-[12px] bg-gradient-to-br from-[#FF9A1F] to-[#FF4D1A] px-3 pb-1 pt-1.5 text-white shadow-[0_3px_8px_rgba(255,77,26,0.35)]">
+          <span className="text-[1.125rem] font-[900] leading-none tracking-[-0.3px]">{deal}</span>
+          <span className="mt-0.5 text-[0.625rem] font-[800] uppercase leading-none tracking-[0.6px] opacity-90">
+            Bepul
+          </span>
+        </span>
+      )}
       {isSet && <Badge tone="green">SET</Badge>}
     </div>
   )
@@ -75,10 +94,20 @@ interface Props {
 
 export default function ProductCard({ partner, product, closed, onOpen, compact }: Props) {
   const line = productLine(product)
-  const qty = useLineQty(partner.uuid, line.key)
+  // Opsiyali mahsulot: "+" oynani ochadi (tanlov kerak), son — barcha variantlar yig'indisi
+  const withOptions = hasOptionGroups(product)
+  const plainQty = useLineQty(partner.uuid, line.key)
+  const totalQty = useProductQty(partner.uuid, product.uuid)
+  const qty = withOptions ? totalQty : plainQty
   const setQty = useCart((s) => s.setQty)
   const guard = useClosedGuard(partner, closed)
   const unavailable = !product.is_available
+  const inc = () => {
+    if (withOptions) return onOpen?.(product)
+    if (guard()) setQty(partner, line, qty + 1)
+  }
+  const dec = () =>
+    withOptions ? decreaseProduct(partner, product.uuid) : setQty(partner, line, qty - 1)
 
   return (
     <div
@@ -106,8 +135,8 @@ export default function ProductCard({ partner, product, closed, onOpen, compact 
               count={qty}
               size={compact ? 36 : 44}
               className={qty > 0 ? 'w-full justify-between' : ''}
-              onInc={() => guard() && setQty(partner, line, qty + 1)}
-              onDec={() => setQty(partner, line, qty - 1)}
+              onInc={inc}
+              onDec={dec}
             />
           </div>
         )}
@@ -144,57 +173,69 @@ export function SetCard({
   onOpen?: (s: ProductSet) => void
 }) {
   const line = setLine(set)
-  const qty = useLineQty(partner.uuid, line.key)
+  const withOptions = hasOptionGroups(set)
+  const plainQty = useLineQty(partner.uuid, line.key)
+  const totalQty = useProductQty(partner.uuid, set.uuid)
+  const qty = withOptions ? totalQty : plainQty
   const setQty = useCart((s) => s.setQty)
   const guard = useClosedGuard(partner, closed)
-  const saving = set.old_price && set.old_price > set.price ? set.old_price - set.price : 0
+  const sale = !!set.old_price && set.old_price > set.price
+  const percent = sale ? Math.round(((set.old_price! - set.price) / set.old_price!) * 100) : 0
+  const content = set.items.length
+    ? set.items.map((i) => `${i.quantity}× ${i.name}`).join(', ')
+    : set.description || ''
   return (
     <div
       onClick={() => onOpen?.(set)}
       className={cx(
-        'flex w-[280px] shrink-0 cursor-pointer gap-3 rounded-[20px] border border-solid border-go-line bg-white p-2.5 lg:w-[320px]',
+        'w-[220px] shrink-0 cursor-pointer sm:w-[250px] lg:w-auto',
         closed && 'opacity-60'
       )}
     >
-      <div className="relative h-[104px] w-[104px] shrink-0 overflow-hidden rounded-[16px]">
+      <div className="relative aspect-square overflow-hidden rounded-[22px] bg-[#E9EEF0] lg:rounded-[28px]">
         <Img src={set.image} alt={set.name} className="h-full w-full" />
-        <div className="absolute left-1.5 top-1.5">
-          <DealBadges isSet />
-        </div>
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation()
-            onOpen?.(set)
-          }}
-          className="cursor-pointer truncate border-0 bg-transparent p-0 text-left text-[1rem] font-[800] text-go-ink"
-        >
-          {set.name}
-        </button>
-        <div className="mt-0.5 line-clamp-2 text-[0.8125rem] leading-snug text-go-muted">
-          {set.items.length
-            ? set.items.map((i) => `${i.quantity}× ${i.name}`).join(', ')
-            : set.description || ''}
-        </div>
-        <div className="mt-auto flex items-end justify-between gap-2 pt-1">
-          <div>
-            <PriceLine price={set.price} old={set.old_price} size={16} />
-            {saving > 0 && (
-              <div className="text-[0.75rem] font-[800] text-go-green">−{som(saving)} tejaysiz</div>
-            )}
-          </div>
-          {!closed && (
+        {percent > 0 && (
+          <span className="absolute left-2.5 top-2.5 rounded-[9px] bg-[#16A34A] px-2 py-[5px] text-[0.8125rem] font-[700] leading-none text-white lg:left-3 lg:top-3 lg:rounded-[10px] lg:px-2.5 lg:py-1 lg:text-[1.0625rem]">
+            −{percent}%
+          </span>
+        )}
+        {!closed && (
+          <div
+            className="absolute bottom-2.5 right-2.5 lg:bottom-3 lg:right-3"
+            onClick={(e) => e.stopPropagation()}
+          >
             <Stepper
               count={qty}
-              size={36}
-              onInc={() => guard() && setQty(partner, line, qty + 1)}
-              onDec={() => setQty(partner, line, qty - 1)}
+              size={40}
+              onInc={() => {
+                if (withOptions) return onOpen?.(set)
+                if (guard()) setQty(partner, line, qty + 1)
+              }}
+              onDec={() =>
+                withOptions ? decreaseProduct(partner, set.uuid) : setQty(partner, line, qty - 1)
+              }
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
+      <div className="mt-2.5 flex flex-wrap items-baseline gap-x-2">
+        <span className="text-[1rem] font-[800] tracking-[-0.3px] text-[#FF5A1F] lg:text-[1.25rem]">
+          {som(set.price)}
+        </span>
+        {sale && (
+          <span className="text-[0.8125rem] font-[500] text-[#6B7280] line-through lg:text-[1.0625rem]">
+            {formatSum(set.old_price!)}
+          </span>
+        )}
+      </div>
+      <div className="mt-0.5 truncate text-[0.875rem] font-[500] text-go-ink lg:text-[1.0625rem]">
+        {set.name}
+      </div>
+      {content && (
+        <div className="mt-0.5 line-clamp-2 text-[0.75rem] leading-snug text-[#8A919C] lg:text-[0.9375rem]">
+          {content}
+        </div>
+      )}
     </div>
   )
 }

@@ -2,8 +2,10 @@ import Link from 'next/link'
 import type { Partner } from '../lib/types'
 import { useFavorite } from '../lib/favorites'
 import {
+  cuisineLabel,
   cx,
   distanceKm,
+  isNewPartner,
   distanceLabel,
   etaRange,
   isOpenNow,
@@ -39,6 +41,20 @@ function Heart({ uuid, className }: { uuid: string; className?: string }) {
   )
 }
 
+/** Yangi qo'shilgan maskan belgisi (rasm ustida) */
+export function NewBadge({ className }: { className?: string }) {
+  return (
+    <span
+      className={cx(
+        'rounded-lg bg-gradient-to-br from-[#22C55E] to-[#15803D] px-2.5 py-[5px] text-[0.75rem] font-[800] uppercase leading-none tracking-[0.4px] text-white shadow-[0_2px_6px_rgba(0,0,0,0.18)]',
+        className
+      )}
+    >
+      Yangi
+    </span>
+  )
+}
+
 /** Superapp `_FoodRestaurantCard`: 16:9 rasm, ostida nom · yetkazish vaqti · reyting */
 export function FoodRestaurantCard({
   partner: p,
@@ -61,6 +77,7 @@ export function FoodRestaurantCard({
       ? distanceKm(lat, lng, p.lat, p.lng)
       : null
   const hours = workingHoursLabel(p)
+  const cuisines = cuisineLabel(p)
 
   let info: string | null
   if (pickup)
@@ -85,23 +102,12 @@ export function FoodRestaurantCard({
             {`Yopiq${hours ? ` · ${hours}` : opensAtLabel(p) ? ` · ${opensAtLabel(p)} da ochiladi` : ''}`}
           </span>
         )}
+        {open && isNewPartner(p) && <NewBadge className="absolute left-2.5 top-2.5" />}
         <Heart uuid={p.uuid} className="right-1.5 top-1.5" />
       </div>
-      <div className="mt-2 flex items-start gap-2.5">
-        <div className="min-w-0 flex-1">
-          <div className="truncate text-[1.0625rem] font-[800] tracking-[-0.3px] text-[#111]">
-            {p.name}
-          </div>
-          {info && (
-            <div className="mt-0.5 flex items-center gap-1 text-[0.844rem] text-[#6B7280]">
-              {pickup ? (
-                <IconNavigate size={16} className="shrink-0" />
-              ) : (
-                <IconScooter size={16} className="shrink-0" />
-              )}
-              <span className="truncate">{info}</span>
-            </div>
-          )}
+      <div className="mt-2 flex items-center gap-2.5">
+        <div className="min-w-0 flex-1 truncate text-[1.0625rem] font-[800] tracking-[-0.3px] text-[#111]">
+          {p.name}
         </div>
         {p.rating > 0 && (
           <span className="flex shrink-0 items-center gap-0.5 text-[0.906rem] font-[700] text-[#111]">
@@ -110,6 +116,21 @@ export function FoodRestaurantCard({
           </span>
         )}
       </div>
+      {(info || cuisines) && (
+        <div className="mt-0.5 flex items-center gap-2 text-[0.844rem] text-[#6B7280]">
+          {info && (
+            <span className="flex min-w-0 shrink items-center gap-1">
+              {pickup ? (
+                <IconNavigate size={16} className="shrink-0" />
+              ) : (
+                <IconScooter size={16} className="shrink-0" />
+              )}
+              <span className="truncate">{info}</span>
+            </span>
+          )}
+          {cuisines && <span className="min-w-0 flex-1 truncate text-right">{cuisines}</span>}
+        </div>
+      )}
     </Link>
   )
 }
@@ -149,10 +170,15 @@ export function StoreListCard({
         <div className="absolute inset-x-0 bottom-[30px] top-0 overflow-hidden rounded-[22px] bg-[#F2F3F5]">
           <Img src={p.banner || p.logo} alt={p.name} grayscale={!open} className="h-full w-full" />
           {!open && <div className="absolute inset-0 bg-black/25" />}
-          {open && fee === 0 && (
-            <span className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-lg bg-go-bright py-[3px] pl-1.5 pr-2 text-[0.719rem] font-[700] text-white">
-              <IconScooter size={14} /> Bepul yetkazish
-            </span>
+          {open && (fee === 0 || isNewPartner(p)) && (
+            <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
+              {isNewPartner(p) && <NewBadge />}
+              {fee === 0 && (
+                <span className="inline-flex items-center gap-1 rounded-lg bg-go-bright py-[3px] pl-1.5 pr-2 text-[0.719rem] font-[700] text-white">
+                  <IconScooter size={14} /> Bepul yetkazish
+                </span>
+              )}
+            </div>
           )}
           {!open && (
             <span className="absolute left-3 top-3 rounded-[9px] bg-black/60 px-[9px] py-1 text-[0.75rem] font-[700] text-white">

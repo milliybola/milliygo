@@ -2,11 +2,14 @@ import { message } from 'antd'
 import { useEffect, useState } from 'react'
 import { productLine, setLine, useCart } from '../lib/cart'
 import { useRequireLocation } from '../lib/session'
-import type { Partner, Product, ProductSet } from '../lib/types'
+import type { Partner, Product, ProductOptionGroup, ProductSet } from '../lib/types'
 import { dealLabel, freeCount, som } from '../lib/utils'
 import { IconClose, IconGift, IconMinus, IconPlus } from '../ui/icons'
 import { Img, Notice, Sheet } from '../ui/primitives'
+import OptionGroups, { useOptionSelection } from './OptionGroups'
 import { DealBadges } from './ProductCard'
+
+const NO_GROUPS: ProductOptionGroup[] = []
 
 interface Props {
   partner: Partner
@@ -28,7 +31,14 @@ export default function ProductSheet({
   onOpenProduct,
 }: Props) {
   const open = !!(product || set)
-  const line = product ? productLine(product) : set ? setLine(set) : null
+  const groups = product?.option_groups ?? set?.option_groups ?? NO_GROUPS
+  const hasGroups = groups.length > 0
+  const { picked, toggle, selected, valid, missing } = useOptionSelection(
+    groups,
+    product?.uuid || set?.uuid || ''
+  )
+  const [showMissing, setShowMissing] = useState(false)
+  const line = product ? productLine(product, selected) : set ? setLine(set, selected) : null
   const inCart = useCart((s) =>
     line ? s.carts[partner.uuid]?.lines.find((l) => l.key === line.key)?.quantity || 0 : 0
   )
@@ -37,7 +47,9 @@ export default function ProductSheet({
   const [qty, setLocal] = useState(1)
 
   useEffect(() => {
-    if (open) setLocal(Math.max(1, inCart))
+    // Opsiyali mahsulotda har ochilganda 1 dan boshlanadi (tanlangan variant savatga qo'shiladi)
+    if (open) setLocal(hasGroups ? 1 : Math.max(1, inCart))
+    setShowMissing(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [product?.uuid, set?.uuid])
 
@@ -63,7 +75,13 @@ export default function ProductSheet({
       message.info("Muassasa hozir yopiq — savatga qo'shib bo'lmaydi")
       return
     }
-    setQty(partner, line, qty)
+    if (!valid) {
+      setShowMissing(true)
+      message.warning(`«${missing?.name}» bo'yicha tanlovni to'ldiring`)
+      return
+    }
+    // Opsiyali mahsulotda shu variant savatda bo'lsa — ustiga qo'shiladi; oddiyida miqdor almashtiriladi
+    setQty(partner, line, hasGroups ? inCart + qty : qty)
     message.success({ content: inCart ? 'Savat yangilandi' : "Savatga qo'shildi", duration: 1.2 })
     onClose()
   }
@@ -108,7 +126,7 @@ export default function ProductSheet({
                 ? 'Muassasa yopiq'
                 : unavailable
                   ? 'Mavjud emas'
-                  : inCart
+                  : inCart && !hasGroups
                     ? 'Yangilash'
                     : "Savatga qo'shish"}
             </span>
@@ -190,6 +208,15 @@ export default function ProductSheet({
           <p className="mb-0 mt-3 whitespace-pre-line text-[0.9375rem] leading-relaxed text-[#4B5563]">
             {product.description}
           </p>
+        )}
+
+        {hasGroups && (
+          <OptionGroups
+            groups={groups}
+            picked={picked}
+            onToggle={toggle}
+            highlight={showMissing ? missing : null}
+          />
         )}
       </div>
 
