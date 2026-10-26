@@ -1,9 +1,11 @@
 import { Map, Placemark } from '@pbe/react-yandex-maps'
 import { message } from 'antd'
+import { useQueryClient } from '@tanstack/react-query'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { SUPPORT_TELEGRAM } from '../layout/GoFooter'
+import { cancelOrder, fetchCheckoutUrl } from '../lib/api'
 import { usePartner, useOrder, usePublicOrder } from '../lib/queries'
 import { useQueryParam } from '../lib/route'
 import { useHydrated, useSession, useStorageValue } from '../lib/session'
@@ -562,6 +564,40 @@ export default function OrderTrackPage() {
     ? orderNumber(order)
     : snap?.order_number || (uuid ? `#${uuid.slice(0, 8).toUpperCase()}` : '')
   const [routeOpen, setRouteOpen] = useState(false)
+  const qc = useQueryClient()
+  const [busy, setBusy] = useState(false)
+  const statusKey = (order?.status || '').toUpperCase()
+  const verifying = statusKey === 'VERIFYING'
+  const awaitingPay = statusKey === 'AWAITING_PAYMENT'
+  const payMethod = String(order?.raw?.payment_method || '')
+  const rejectReason = String(order?.raw?.reject_reason || order?.raw?.cancel_reason || '')
+  const onCancel = async () => {
+    if (!uuid || busy) return
+    setBusy(true)
+    try {
+      await cancelOrder(uuid)
+      message.success('Buyurtma bekor qilindi')
+      qc.invalidateQueries({ queryKey: ['go', 'order', uuid] })
+      qc.invalidateQueries({ queryKey: ['go', 'orders'] })
+    } catch (e: any) {
+      message.error(e?.message || 'Bekor qilib bo‘lmadi')
+    } finally {
+      setBusy(false)
+    }
+  }
+  const onPay = async () => {
+    if (!uuid || busy) return
+    setBusy(true)
+    try {
+      const url = await fetchCheckoutUrl(uuid, payMethod || 'payme')
+      if (url) window.location.href = url
+      else message.error("To'lov havolasi topilmadi")
+    } catch (e: any) {
+      message.error(e?.message || "To'lov sahifasini ochib bo'lmadi")
+    } finally {
+      setBusy(false)
+    }
+  }
   const trackUrl = useMemo(
     () =>
       typeof window !== 'undefined' && uuid
@@ -1116,9 +1152,38 @@ export default function OrderTrackPage() {
           </div>
           {cancelled ? (
             <p className="mb-1 mt-3 text-[0.938rem] font-[600] text-[#991B1B]">
-              Buyurtma bekor qilindi. Savollar bo&apos;lsa, qo&apos;llab-quvvatlash xizmatiga
-              yozing.
+              Buyurtma bekor qilindi.
+              {rejectReason ? ` Sabab: ${rejectReason}.` : ''} Savollar bo&apos;lsa,
+              qo&apos;llab-quvvatlash xizmatiga yozing.
             </p>
+          ) : verifying || awaitingPay ? (
+            <div className="mt-3 space-y-3">
+              <div className="rounded-[14px] bg-[#FFF7ED] px-3 py-3 text-[0.875rem] font-[600] text-[#9A3412]">
+                {verifying
+                  ? "Buyurtmangiz qabul qilindi. Operator tez orada sizga qo'ng'iroq qilib tasdiqlaydi — iltimos, telefoningizni oching. Taxminan 20 daqiqa ichida bog'lana olmasak, buyurtma avtomatik bekor qilinadi."
+                  : "Buyurtma tasdiqlandi. Davom etish uchun to'lovni yakunlang."}
+              </div>
+              {verifying && payMethod && payMethod.toUpperCase() !== 'CASH' && (
+                <div className="text-[0.813rem] text-[#6B7280]">
+                  Onlayn to&apos;lov tasdiqlangandan keyin so&apos;raladi.
+                </div>
+              )}
+              {awaitingPay && !isPublicView && (
+                <Button onClick={onPay} disabled={busy}>
+                  To&apos;lovga o&apos;tish
+                </Button>
+              )}
+              {!isPublicView && (
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  disabled={busy}
+                  className="w-full rounded-[14px] border border-solid border-[#FCA5A5] bg-white py-2.5 text-[0.875rem] font-[700] text-[#B91C1C]"
+                >
+                  Buyurtmani bekor qilish
+                </button>
+              )}
+            </div>
           ) : (
             <div className="mt-4">
               <Timeline

@@ -32,6 +32,22 @@ export function statusInfo(raw: string, pickup = false): StatusInfo {
     }
   }
   switch (key) {
+    case 'VERIFYING':
+      return {
+        label: 'Tasdiqlanmoqda',
+        stage: 0,
+        progress: 0.03,
+        tone: 'pending',
+        hint: "Operator tez orada sizga qo'ng'iroq qiladi",
+      }
+    case 'AWAITING_PAYMENT':
+      return {
+        label: "To'lov kutilmoqda",
+        stage: 0,
+        progress: 0.05,
+        tone: 'pending',
+        hint: "To'lovni yakunlang",
+      }
     case 'PENDING':
     case 'CREATED':
     case 'NEW':

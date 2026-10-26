@@ -237,7 +237,11 @@ export default function CheckoutPage() {
           )
           clear(cart.partner.uuid)
           qc.invalidateQueries({ queryKey: ['go', 'orders'] })
-          message.success('Buyurtma qabul qilindi')
+          message.success(
+            String(res?.status).toUpperCase() === 'VERIFYING'
+              ? "Buyurtma qabul qilindi. Operator tez orada qo'ng'iroq qiladi"
+              : 'Buyurtma qabul qilindi'
+          )
           router.replace(uuid ? `/orders/track/?uuid=${uuid}&new=1` : '/orders/')
         } catch (e: any) {
           message.error(e?.message || "Xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.")

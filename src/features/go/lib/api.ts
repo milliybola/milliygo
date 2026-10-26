@@ -200,6 +200,20 @@ export async function createOrder(payload: CreateOrderPayload): Promise<any> {
   return unwrap(res)
 }
 
+/** Mijoz buyurtmani bekor qiladi (tasdiqlanayotgan buyurtma ham) */
+export async function cancelOrder(orderUuid: string) {
+  return request({ url: `/orders/${orderUuid}/`, method: 'delete' })
+}
+
+/** Tasdiqlangandan keyin onlayn to'lov sahifasi havolasi */
+export async function fetchCheckoutUrl(orderUuid: string, method: string): Promise<string | null> {
+  const res: any = await request({
+    url: `/payments/${method.toLowerCase()}/checkout/${orderUuid}/`,
+    method: 'get',
+  })
+  return res?.checkout_url || res?.data?.checkout_url || null
+}
+
 export async function rateCourier(orderUuid: string, data: { score: number; comment: string }) {
   return request({ url: `/orders/${orderUuid}/rate-courier/`, method: 'post', data })
 }
