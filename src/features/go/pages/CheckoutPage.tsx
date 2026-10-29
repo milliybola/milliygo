@@ -21,6 +21,7 @@ import {
   etaRange,
   isOpenNow,
   isOutOfZone,
+  sendQuantity,
   som,
   workingHoursLabel,
   zoneFor,
@@ -80,6 +81,8 @@ export default function CheckoutPage() {
   const [entrance, setEntrance] = useState('')
   const [floor, setFloor] = useState('')
   const [apartment, setApartment] = useState('')
+  // Idempotency: shu checkout uchun bitta kalit — double-tap/qayta yuborishda ikki buyurtma bo'lmaydi
+  const [idemKey] = useState(() => `ck-${Date.now()}-${Math.random().toString(36).slice(2)}`)
   const [intercom, setIntercom] = useState('')
   const [comment, setComment] = useState('')
   const [phone, setPhone] = useState('')
@@ -206,9 +209,11 @@ export default function CheckoutPage() {
         const options = l.options?.length ? { options: l.options.map((o) => o.uuid) } : {}
         // Qadoq (quti) tanlangan bo'lsa — uning uuid'si; `quantity` kg uchun kasr bo'lishi mumkin
         const packaging = l.packaging ? { packaging: l.packaging.uuid } : {}
+        // Promo qatorida sovg'a ham qo'shib yuboriladi (to'langan + sovg'a); server bepulni tasdiqlaydi
+        const qty = sendQuantity(l)
         return l.kind === 'set'
-          ? { set: l.uuid, quantity: l.quantity, ...options, ...packaging }
-          : { product_uuid: l.uuid, quantity: l.quantity, ...options, ...packaging }
+          ? { set: l.uuid, quantity: qty, ...options, ...packaging }
+          : { product_uuid: l.uuid, quantity: qty, ...options, ...packaging }
       }),
     }
 
@@ -221,7 +226,7 @@ export default function CheckoutPage() {
       onOk: async () => {
         setLoading(true)
         try {
-          const res = await createOrder(payload)
+          const res = await createOrder(payload, idemKey)
           const uuid = res?.uuid || res?.id
           sessionStorage.setItem(
             LAST_ORDER_KEY,

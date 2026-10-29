@@ -215,10 +215,27 @@ export function dealLabel(p?: PromotionShort | null): string | null {
   return p.label || `${p.buy_quantity}+${p.get_quantity}`
 }
 
-/** free = floor(qty / (buy+get)) * get */
+/** free = floor(qty / (buy+get)) * get — umumiy miqdordan (server shu formulani ishlatadi) */
 export function freeCount(qty: number, p?: PromotionShort | null): number {
   if (!p || p.buy_quantity <= 0 || p.get_quantity <= 0) return 0
   return Math.floor(qty / (p.buy_quantity + p.get_quantity)) * p.get_quantity
+}
+
+/**
+ * Avtomatik sovg'a: har [buy] ta TO'LANGANga [get] ta. `l.quantity` — to'langan (tanlangan) son.
+ * Faqat butun donali, qadoqsiz qatorlar. Serverga to'langan + sovg'a yuboriladi;
+ * server freeCount(to'langan + sovg'a) = aynan shu sovg'ani qaytaradi.
+ */
+export function giftCount(l: CartLine): number {
+  const p = l.promotion
+  if (!p || p.buy_quantity <= 0 || p.get_quantity <= 0) return 0
+  if (l.unit === 'KG' || l.packaging) return 0
+  return Math.floor(l.quantity / p.buy_quantity) * p.get_quantity
+}
+
+/** Serverga yuboriladigan miqdor: dona promo qatorida to'langan + sovg'a, aks holda `quantity` */
+export function sendQuantity(l: CartLine): number {
+  return roundQty(l.quantity + giftCount(l))
 }
 
 /** Kasr miqdorlar (0.1 + 0.2) suzuvchi nuqta xatosiz: 3 xonagacha yaxlitlanadi */
@@ -242,29 +259,27 @@ export function qtyLabel(q: {
   return formatQty(q.quantity, q.unit)
 }
 
-/** Qator summasi so'mgacha yaxlitlanadi (server ham shunday: kg kabi kasr miqdorlar uchun) */
+/** Qator summasi: faqat to'langan donalar (sovg'alar bepul); so'mgacha yaxlitlanadi */
 export function lineTotal(l: CartLine): number {
-  return Math.round((l.quantity - freeCount(l.quantity, l.promotion)) * l.price)
+  return Math.round(l.quantity * l.price)
 }
 
 export function lineSaving(l: CartLine): number {
-  const free = freeCount(l.quantity, l.promotion) * l.price
+  const free = giftCount(l) * l.price
   const sale = l.old_price && l.old_price > l.price ? (l.old_price - l.price) * l.quantity : 0
   return Math.round(free + sale)
 }
 
-/** Savat qatori ostidagi izoh: "1+1 aksiya · 2 tasi bepul" */
+/** Savat qatori ostidagi izoh: "1+1 aksiya · 1 ta sovg'a qo'shildi" yoki "yana N ta oling — sovg'a" */
 export function dealNote(l: CartLine): string | null {
   const p = l.promotion
   const label = dealLabel(p)
   if (!p || !label) return null
-  const free = freeCount(l.quantity, p)
-  if (free > 0) return `${label} aksiya · ${free} tasi bepul`
-  const rest = l.quantity % (p.buy_quantity + p.get_quantity)
-  const needPaid = rest < p.buy_quantity ? p.buy_quantity - rest : 0
-  return needPaid > 0
-    ? `${label} aksiya · yana ${needPaid} ta qo'shing`
-    : `${label} aksiya · yana 1 ta qo'shing — bepul`
+  const gift = giftCount(l)
+  if (gift > 0) return `${label} aksiya · ${gift} ta sovg'a qo'shildi 🎁`
+  const rest = p.buy_quantity > 0 ? l.quantity % p.buy_quantity : 0
+  const needPaid = rest === 0 ? p.buy_quantity : p.buy_quantity - rest
+  return `${label} aksiya · yana ${needPaid} ta oling — ${p.get_quantity} ta sovg'a`
 }
 
 /** Qaytim: jamidan katta yaxlit kupyuralar (superapp bilan bir xil) */

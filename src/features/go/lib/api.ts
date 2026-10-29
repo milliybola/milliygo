@@ -150,8 +150,21 @@ export async function search(q: string, partner_type?: PartnerType): Promise<Sea
 
 // ── Buyurtmalar ──────────────────────────────────────────────────────────
 export async function fetchOrders(): Promise<Order[]> {
-  const res = await request({ url: '/orders/', method: 'get' })
-  return listOf(res, 'orders').map(normalizeOrder)
+  // `/orders/` DRF bilan sahifalanadi — `next` bo'lsa keyingi sahifalarni ham olamiz
+  const all: any[] = []
+  let page = 1
+  while (page <= 25) {
+    const res: any = await request({
+      url: '/orders/',
+      method: 'get',
+      params: page > 1 ? { page } : undefined,
+    })
+    all.push(...listOf(res, 'orders'))
+    const d = res?.data ?? res
+    if (!(d && typeof d === 'object' && d.next)) break
+    page++
+  }
+  return all.map(normalizeOrder)
 }
 
 export async function fetchOrder(uuid: string): Promise<Order> {
@@ -195,8 +208,17 @@ export interface CreateOrderPayload {
   )[]
 }
 
-export async function createOrder(payload: CreateOrderPayload): Promise<any> {
-  const res = await request({ url: '/orders/', method: 'post', data: payload })
+export async function createOrder(
+  payload: CreateOrderPayload,
+  idempotencyKey?: string
+): Promise<any> {
+  const res = await request({
+    url: '/orders/',
+    method: 'post',
+    data: payload,
+    // Double-tap/qayta yuborishda takroriy buyurtma yaratilmasligi uchun
+    headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined,
+  })
   return unwrap(res)
 }
 

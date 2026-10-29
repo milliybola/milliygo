@@ -15,6 +15,7 @@ import type { CartLine, PartnerCart, PartnerType, Product } from '../lib/types'
 import {
   cx,
   dealNote,
+  giftCount,
   deliveryFeeFor,
   etaRange,
   formatSum,
@@ -49,6 +50,7 @@ const ChatIcon = ({ size = 23 }: { size?: number }) => (
 /** Savatdagi qator: rasm, nom, qator summasi, kulrang "− N +" (superapp `_CartLineRow`) */
 function LineRow({ cart, line, last }: { cart: PartnerCart; line: CartLine; last: boolean }) {
   const setQty = useCart((s) => s.setQty)
+  const gift = giftCount(line)
   const total = lineTotal(line)
   const full = Math.round(
     (line.old_price && line.old_price > line.price ? line.old_price : line.price) * line.quantity
@@ -145,7 +147,13 @@ function LineRow({ cart, line, last }: { cart: PartnerCart; line: CartLine; last
               {line.set_items.map((i) => `${i.quantity}× ${i.name}`).join(', ')}
             </div>
           ) : null}
-          {note && <div className="mt-1 text-[0.781rem] font-[800] text-[#B45309]">{note}</div>}
+          {gift > 0 ? (
+            <div className="mt-1 text-[0.781rem] font-[800] text-go-green">
+              {line.quantity} ta olindi + {gift} ta sovg'a 🎁
+            </div>
+          ) : (
+            note && <div className="mt-1 text-[0.781rem] font-[800] text-[#B45309]">{note}</div>
+          )}
         </div>
         <div className="flex h-[46px] shrink-0 items-center rounded-[16px] bg-[#F2F3F5]">
           <button
