@@ -12,7 +12,7 @@ import type {
   ProductSet,
   SelectedOption,
 } from './types'
-import { lineSaving, lineTotal, roundQty } from './utils'
+import { giftCount, lineSaving, lineTotal, roundQty } from './utils'
 
 /**
  * Savatlar — har bir hamkor uchun alohida (superapp CartController kabi).
@@ -141,6 +141,7 @@ export const useCart = create<CartState>()(
         const existing = carts[partner.uuid]
         const lines = [...(existing?.lines || [])]
         const idx = lines.findIndex((l) => l.key === line.key)
+        const prevQty = idx >= 0 ? lines[idx].quantity : 0
         if (qty <= 0) {
           if (idx >= 0) lines.splice(idx, 1)
         } else if (idx >= 0) {
@@ -164,6 +165,23 @@ export const useCart = create<CartState>()(
           }
         }
         set({ carts })
+        // Sovg'a qo'shilgan bo'lsa — konfetti + "sovg'a qo'shildi" animatsiyasi (faqat brauzerda)
+        if (typeof window !== 'undefined' && qty > prevQty) {
+          const asLine = (q: number) => ({ ...line, quantity: q }) as CartLine
+          const added = giftCount(asLine(qty)) - giftCount(asLine(prevQty))
+          if (added > 0) {
+            window.dispatchEvent(
+              new CustomEvent('mg:gift', {
+                detail: {
+                  name: line.name,
+                  image: line.image ?? null,
+                  gift: giftCount(asLine(qty)),
+                  added,
+                },
+              })
+            )
+          }
+        }
       },
 
       setMode: (partner, mode) => {

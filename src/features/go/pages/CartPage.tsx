@@ -2,7 +2,7 @@ import { Input, message, Modal } from 'antd'
 import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import DeliveryProgressPanel from '../components/DeliveryProgressPanel'
 import { partnerHref } from '../components/PartnerCard'
 import ProductCard from '../components/ProductCard'
@@ -14,6 +14,7 @@ import { useHydrated, useUserLocation } from '../lib/session'
 import type { CartLine, PartnerCart, PartnerType, Product } from '../lib/types'
 import {
   cx,
+  dealLabel,
   dealNote,
   giftCount,
   deliveryFeeFor,
@@ -148,8 +149,9 @@ function LineRow({ cart, line, last }: { cart: PartnerCart; line: CartLine; last
             </div>
           ) : null}
           {gift > 0 ? (
-            <div className="mt-1 text-[0.781rem] font-[800] text-go-green">
-              {line.quantity} ta olindi + {gift} ta sovg'a 🎁
+            // Sovg'a alohida qatorda ko'rsatiladi (quyida); bu yerda — aksiya belgisi
+            <div className="mt-1 inline-flex items-center gap-1 text-[0.781rem] font-[800] text-go-green">
+              <IconGift size={13} /> {dealLabel(line.promotion)} aksiya
             </div>
           ) : (
             note && <div className="mt-1 text-[0.781rem] font-[800] text-[#B45309]">{note}</div>
@@ -203,6 +205,44 @@ function LineRow({ cart, line, last }: { cart: PartnerCart; line: CartLine; last
         </div>
       </div>
       {!last && <div className="ml-[96px] h-px bg-[#F0F1F3]" />}
+    </div>
+  )
+}
+
+/** Sovg'a qatori — mahsulotga o'xshash, lekin "SOVG'A · Bepul" deb aniq ajratilgan (to'lanmaydi) */
+function GiftRow({ line, gift, last }: { line: CartLine; gift: number; last: boolean }) {
+  const unit = line.old_price && line.old_price > line.price ? line.old_price : line.price
+  const value = Math.round(gift * unit)
+  return (
+    <div>
+      <div className="mt-1 flex items-center gap-3 rounded-[18px] bg-[#F0FDF4] px-3 py-2.5 ring-1 ring-inset ring-[#BBF7D0]">
+        <div className="relative shrink-0">
+          <Img src={line.image} alt={line.name} className="h-[64px] w-[64px] rounded-[16px]" />
+          <span className="absolute -right-1.5 -top-1.5 flex h-[22px] w-[22px] items-center justify-center rounded-full bg-go-green text-[12px] shadow-[0_2px_6px_rgba(21,128,61,.4)]">
+            🎁
+          </span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="rounded-[6px] bg-go-green px-1.5 py-px text-[0.656rem] font-[900] uppercase tracking-wide text-white">
+              Sovg&apos;a
+            </span>
+            <span className="truncate text-[0.9375rem] text-[#111]">{line.name}</span>
+          </div>
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-[0.969rem] font-[900] text-go-green">Bepul</span>
+            {value > 0 && (
+              <span className="text-[0.781rem] text-[#9CA3AF] line-through">
+                {formatSum(value)}
+              </span>
+            )}
+          </div>
+        </div>
+        <span className="shrink-0 rounded-[12px] bg-white px-3 py-2 text-[0.9375rem] font-[800] text-go-green ring-1 ring-inset ring-[#BBF7D0]">
+          × {gift}
+        </span>
+      </div>
+      {!last && <div className="ml-[96px] mt-2.5 h-px bg-[#F0F1F3]" />}
     </div>
   )
 }
@@ -520,9 +560,17 @@ export default function CartPage() {
             )}
 
             <div className="px-4">
-              {cart.lines.map((l, i) => (
-                <LineRow key={l.key} cart={cart} line={l} last={i === cart.lines.length - 1} />
-              ))}
+              {cart.lines.map((l, i) => {
+                const gift = giftCount(l)
+                const isLast = i === cart.lines.length - 1
+                return (
+                  <Fragment key={l.key}>
+                    {/* Sovg'a bo'lsa, to'lanadigan qator va sovg'a qatori guruhlanadi (oraliq chiziqsiz) */}
+                    <LineRow cart={cart} line={l} last={gift > 0 ? true : isLast} />
+                    {gift > 0 && <GiftRow line={l} gift={gift} last={isLast} />}
+                  </Fragment>
+                )
+              })}
               {saving > 0 && (
                 <div className="flex items-center justify-between pb-2 pt-1 text-[0.875rem] font-[800] text-go-green">
                   <span className="flex items-center gap-1.5">

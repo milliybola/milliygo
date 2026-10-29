@@ -215,22 +215,26 @@ export function dealLabel(p?: PromotionShort | null): string | null {
   return p.label || `${p.buy_quantity}+${p.get_quantity}`
 }
 
-/** free = floor(qty / (buy+get)) * get — umumiy miqdordan (server shu formulani ishlatadi) */
+/**
+ * free = umumiy miqdordan, lekin AKSIYA BIR BUYURTMADA BIR MARTA — ko'pi bilan `get` ta
+ * (server `PromotionModel.free_units` shu qoidani ishlatadi).
+ */
 export function freeCount(qty: number, p?: PromotionShort | null): number {
   if (!p || p.buy_quantity <= 0 || p.get_quantity <= 0) return 0
-  return Math.floor(qty / (p.buy_quantity + p.get_quantity)) * p.get_quantity
+  const bundles = Math.floor(qty / (p.buy_quantity + p.get_quantity))
+  return bundles >= 1 ? p.get_quantity : 0
 }
 
 /**
- * Avtomatik sovg'a: har [buy] ta TO'LANGANga [get] ta. `l.quantity` — to'langan (tanlangan) son.
- * Faqat butun donali, qadoqsiz qatorlar. Serverga to'langan + sovg'a yuboriladi;
- * server freeCount(to'langan + sovg'a) = aynan shu sovg'ani qaytaradi.
+ * Avtomatik sovg'a: `buy` ta TO'LANSA `get` ta — aksiya bir buyurtmada BIR MARTA.
+ * `l.quantity` — to'langan (tanlangan) son. Faqat butun donali, qadoqsiz qatorlar.
+ * Serverga to'langan + sovg'a yuboriladi; server freeCount(to'langan + sovg'a) = aynan shu sovg'a.
  */
 export function giftCount(l: CartLine): number {
   const p = l.promotion
   if (!p || p.buy_quantity <= 0 || p.get_quantity <= 0) return 0
   if (l.unit === 'KG' || l.packaging) return 0
-  return Math.floor(l.quantity / p.buy_quantity) * p.get_quantity
+  return l.quantity >= p.buy_quantity ? p.get_quantity : 0
 }
 
 /** Serverga yuboriladigan miqdor: dona promo qatorida to'langan + sovg'a, aks holda `quantity` */
@@ -277,8 +281,8 @@ export function dealNote(l: CartLine): string | null {
   if (!p || !label) return null
   const gift = giftCount(l)
   if (gift > 0) return `${label} aksiya · ${gift} ta sovg'a qo'shildi 🎁`
-  const rest = p.buy_quantity > 0 ? l.quantity % p.buy_quantity : 0
-  const needPaid = rest === 0 ? p.buy_quantity : p.buy_quantity - rest
+  // Aksiya bir buyurtmada bir marta: `buy` ta to'lansa `get` ta sovg'a
+  const needPaid = Math.max(p.buy_quantity - l.quantity, 1)
   return `${label} aksiya · yana ${needPaid} ta oling — ${p.get_quantity} ta sovg'a`
 }
 

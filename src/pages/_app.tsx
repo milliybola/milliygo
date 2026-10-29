@@ -24,6 +24,7 @@ import '@/styles/globals.css'
 import 'swiper/css'
 import 'react-datepicker/dist/react-datepicker.css'
 import GlobalLoginModal from '@/features/Account/auth/components/GlobalLoginModal'
+import GiftCelebration from '@/features/go/components/GiftCelebration'
 
 export const appFont = Roboto({
   subsets: ['latin', 'latin-ext', 'cyrillic'],
@@ -103,6 +104,7 @@ const App = ({ Component, pageProps }: AppProps) => {
               <AuthProvider>
                 <NextNProgress color={colors.primary} height={2} options={{ showSpinner: false }} />
                 <GlobalLoginModal />
+                <GiftCelebration />
                 <YMaps query={{ apikey: YANDEX_API_KEY, lang: 'uz_UZ' as any }}>
                   <CLayout>
                     <Component {...pageProps} />
