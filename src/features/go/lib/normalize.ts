@@ -322,9 +322,10 @@ export function normalizeCourier(src: any): Courier | null {
     str(nested?.vehicle_number) ||
     str(nested?.plate_number) ||
     str(src.courier_vehicle_number)
-  const desc = [str(vehicle?.color), str(vehicle?.brand), str(vehicle?.model)]
-    .filter(Boolean)
-    .join(' ')
+  // «Oq rang Chevrolet Cobalt»: rang yonida «rang» so'zi (agar o'zi yozilmagan bo'lsa)
+  const color = str(vehicle?.color)
+  const colorText = color ? (/rang/i.test(color) ? color : `${color} rang`) : null
+  const desc = [colorText, str(vehicle?.brand), str(vehicle?.model)].filter(Boolean).join(' ')
   const avatar =
     str(nested?.avatar) || str(nested?.photo) || str(user?.avatar) || str(src.courier_avatar)
   const rating = toNumOrNull(nested?.rating ?? nested?.avg_rating ?? src.courier_rating)
@@ -339,6 +340,22 @@ export function normalizeCourier(src: any): Courier | null {
     vehicle_desc: desc || null,
     license_plate: plate,
   }
+}
+
+/** Kuryer transport turi (backend COURIER_TRANSPORT_CHOICES kaliti) → o'zbekcha nom. */
+const TRANSPORT_LABELS: Record<string, string> = {
+  walk: 'Piyoda',
+  bike: 'Velosiped',
+  scooter: 'Skuter',
+  motorcycle: 'Mototsikl',
+  car: 'Avtomobil',
+  van: 'Furgon',
+  truck: 'Yuk mashinasi',
+}
+
+export function transportLabel(type: string | null | undefined): string | null {
+  if (!type) return null
+  return TRANSPORT_LABELS[type.toLowerCase()] ?? type
 }
 
 export function normalizeOrder(j: any): Order {

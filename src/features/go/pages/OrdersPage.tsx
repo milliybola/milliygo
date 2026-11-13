@@ -5,7 +5,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import { orderHref } from '../components/ActiveOrdersStrip'
 import { fetchPartner, fetchPartners } from '../lib/api'
 import { productLine, useCart } from '../lib/cart'
-import { normalizeProduct } from '../lib/normalize'
+import { normalizeProduct, transportLabel } from '../lib/normalize'
 import { useOrders } from '../lib/queries'
 import { useRequireLocation, useSession } from '../lib/session'
 import { isOrderActive, orderNumber, orderStatus } from '../lib/status'
@@ -89,7 +89,9 @@ function SpotlightCard({ o }: { o: Order }) {
   const itemsText = o.items.map((i) => `${qtyLabel(i)} ${i.name}`).join(', ')
   const c = o.courier
   const hasCourier = !pickup && !!c?.full_name
-  const vehicle = [c?.vehicle_desc || c?.vehicle_type, c?.license_plate].filter(Boolean).join(' • ')
+  const vehicle = [c?.vehicle_desc || transportLabel(c?.vehicle_type), c?.license_plate]
+    .filter(Boolean)
+    .join(' • ')
   const href = orderHref(o)
   return (
     <div

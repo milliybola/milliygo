@@ -251,6 +251,22 @@ export const IconPill = (p: P) => (
     <path d="m9 9 6 6" />
   </svg>
 )
+export const IconCar = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M5 16.5H3.5v-4l2-5h13l2 5v4H19" />
+    <path d="M3.5 12.5h17" />
+    <circle cx="7.5" cy="16.5" r="1.8" />
+    <circle cx="16.5" cy="16.5" r="1.8" />
+    <path d="M9.3 16.5h5.4" />
+  </svg>
+)
+export const IconBike = (p: P) => (
+  <svg {...base(p)}>
+    <circle cx="5.5" cy="16.5" r="3.5" />
+    <circle cx="18.5" cy="16.5" r="3.5" />
+    <path d="M5.5 16.5 9 9h6l3.5 7.5M9 9l3 7.5h-6.5M12 16.5 15 9M14 6h2.5" />
+  </svg>
+)
 export const IconTruck = (p: P) => (
   <svg {...base(p)}>
     <path d="M2.5 6.5h11v10h-11zM13.5 10h4l3 3v3.5h-7" />

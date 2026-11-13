@@ -36,7 +36,10 @@ import {
   IconStore,
   IconTruck,
   IconWalk,
+  IconCar,
+  IconBike,
 } from '../ui/icons'
+import { transportLabel } from '../lib/normalize'
 import { Button, EmptyState, Img, Skeleton } from '../ui/primitives'
 import RouteSheet from '../components/RouteSheet'
 import { LAST_ORDER_KEY } from './CheckoutPage'
@@ -189,77 +192,116 @@ function Timeline({
   )
 }
 
-function plateParts(raw?: string | null): [string, string] | null {
-  const s = (raw || '').replace(/\s+/g, '').toUpperCase()
-  if (!s) return null
-  const m = s.match(/^(\d{2})(.+)$/)
-  if (!m) return ['', s]
-  return [m[1], m[2].replace(/(?<=[A-Z])(?=\d)|(?<=\d)(?=[A-Z])/g, ' ')]
+/** «Elbek Narzullayev» → «ELBEK N.» (familiya to'liq ko'rsatilmaydi). */
+function shortName(full?: string | null): string {
+  const parts = (full || '').trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return 'KURYER'
+  const first = parts[0].toUpperCase()
+  return parts[1] ? `${first} ${parts[1][0].toUpperCase()}.` : first
 }
 
-function CourierCard({ order, shared }: { order: Order; shared?: boolean }) {
+/** Kuryer transportiga mos belgi (kuryer ilovada «Mening transportim»da tanlaydi). */
+function VehicleIcon({ type }: { type: string | null }) {
+  switch ((type || '').toLowerCase()) {
+    case 'walk':
+      return <IconWalk size={20} />
+    case 'bike':
+      return <IconBike size={20} />
+    case 'car':
+      return <IconCar size={20} />
+    case 'van':
+    case 'truck':
+      return <IconTruck size={20} />
+    default:
+      return <IconScooter size={20} />
+  }
+}
+
+const courierBtn =
+  'flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center rounded-[14px] border-[1.5px] border-solid border-[#E5E7EB] bg-white p-0 text-[#111827] no-underline'
+
+/**
+ * Kuryer kartasi: avatar, «ISM F.» + sariq reyting, ostida transport («Oq rang Chevrolet Cobalt»);
+ * pastda davlat raqami plastinkasi va doira-kvadrat tugmalar: ulashish, SMS, qo'ng'iroq.
+ * Ommaviy (ulashilgan) havolada telefon yo'q — faqat ulashish qoladi.
+ */
+function CourierCard({
+  order,
+  shared,
+  onShare,
+}: {
+  order: Order
+  shared?: boolean
+  onShare: () => void
+}) {
   const c = order.courier
   if (!c || !(c.full_name || c.phone || c.license_plate)) return null
-  const plate = plateParts(c.license_plate)
+  const plate = (c.license_plate || '').replace(/\s+/g, '').toUpperCase()
+  const subtitle =
+    c.vehicle_desc ||
+    transportLabel(c.vehicle_type) ||
+    (shared ? 'Buyurtma kuryeri' : 'Sizning kuryeringiz')
+  const phone = !shared ? c.phone : null
   return (
     <div className={card}>
-      <div className="flex items-center gap-3.5">
-        <span className="flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-full border-[3px] border-solid border-[#15803D]/25 p-[3px]">
+      <div className="flex items-center gap-3">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#DCFCE7] text-[#15803D]">
           {c.avatar ? (
             <Img src={c.avatar} alt="" className="h-full w-full rounded-full" />
           ) : (
-            <span className="flex h-full w-full items-center justify-center rounded-full bg-[#DCFCE7] text-[#15803D]">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" />
-              </svg>
-            </span>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7z" />
+            </svg>
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[1.0625rem] font-[600] text-[#111827]">
-            {c.full_name || 'Kuryer'}
-          </div>
-          <div className="mt-1 text-[0.8125rem] font-[500] text-[#6B7280]">
-            {shared ? 'Buyurtma kuryeri' : 'Sizning kuryeringiz'}
-          </div>
-          {c.rating ? (
-            <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-solid border-[#FDE68A] bg-[#FEF9C3] px-2.5 py-1 text-[0.8125rem] font-[600] text-[#111827]">
-              <span className="text-[#713F12]">★</span> {c.rating.toFixed(1)}
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="truncate text-[1.0625rem] font-[800] tracking-[0.2px] text-[#111827]">
+              {shortName(c.full_name)}
             </span>
-          ) : null}
+            {c.rating ? (
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-[#FEF08A] px-1.5 py-0.5 text-[0.8125rem] font-[700] text-[#111827]">
+                ★ {c.rating.toFixed(1)}
+              </span>
+            ) : null}
+          </div>
+          <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[0.875rem] font-[500] text-[#6B7280]">
+            {c.vehicle_type && (
+              <span className="shrink-0 text-[#9CA3AF]">
+                <VehicleIcon type={c.vehicle_type} />
+              </span>
+            )}
+            <span className="truncate">{subtitle}</span>
+          </div>
         </div>
       </div>
+
       <div className="mt-3 flex items-center gap-2">
-        <span className="text-[#15803D]">
-          <IconScooter size={20} />
-        </span>
-        <span className="min-w-0 flex-1 truncate text-[0.938rem] font-[500] text-[#111827]">
-          {c.vehicle_desc || c.vehicle_type || 'Skuter'}
-        </span>
-        {plate && (
-          <span className="text-[0.719rem] font-[600] tracking-[1px] text-[#6B7280]">
-            DAVLAT RAQAMI
+        {plate ? (
+          <span
+            aria-label="Davlat raqami"
+            className="mr-auto flex h-12 min-w-0 items-center rounded-[12px] border-[1.6px] border-solid border-[#111827] bg-white px-3 text-[1.5rem] font-[500] leading-none tracking-[0.5px] text-[#111827]"
+          >
+            <span className="truncate">{plate}</span>
           </span>
+        ) : (
+          <span className="mr-auto" />
+        )}
+        <button type="button" aria-label="Ulashish" onClick={onShare} className={courierBtn}>
+          <IconShare size={20} />
+        </button>
+        {phone && (
+          <>
+            <a href={`sms:${phone}`} aria-label="Kuryerga xabar" className={courierBtn}>
+              <IconChat size={20} />
+            </a>
+            <a href={`tel:${phone}`} aria-label="Kuryerga qo'ng'iroq" className={courierBtn}>
+              <IconPhone size={20} />
+            </a>
+          </>
         )}
       </div>
-      {plate && (
-        <div className="mt-2.5 inline-flex items-center rounded-lg border-[1.6px] border-solid border-[#111827] bg-white px-3 py-1.5">
-          {plate[0] && (
-            <>
-              <span className="text-[1rem] font-[800] text-[#111827]">{plate[0]}</span>
-              <span className="mx-[9px] h-[18px] w-[1.5px] bg-[#CBD5E1]" />
-            </>
-          )}
-          <span className="text-[1rem] font-[800] tracking-[1px] text-[#111827]">{plate[1]}</span>
-          <span className="mx-[9px] h-[18px] w-px bg-[#E2E8F0]" />
-          <span className="mr-1 text-[0.656rem] font-[800] text-[#6B7280]">UZ</span>
-          <span className="flex flex-col gap-[2px]">
-            <span className="h-[3px] w-4 bg-[#16A34A]" />
-            <span className="h-[3px] w-4 bg-[#16A34A]" />
-          </span>
-        </div>
-      )}
     </div>
   )
 }
@@ -488,20 +530,30 @@ function TrackMap({
   if (!pts.length) return null
   const lats = pts.map((p) => p[0])
   const lngs = pts.map((p) => p[1])
+  const span = Math.max(
+    Math.max(...lats) - Math.min(...lats),
+    Math.max(...lngs) - Math.min(...lngs)
+  )
+  // Nuqtalar juda yaqin bo'lsa (masalan 20 m) bounds xaritani 21-zoomgacha olib boradi — u yerda Yandex
+  // plitkalari yo'q va xarita qora chiqadi. Shunday holatda markaz + oddiy zoom ishlatamiz.
   const bounds =
-    pts.length > 1
+    pts.length > 1 && span > 0.004
       ? [
           [Math.min(...lats), Math.min(...lngs)],
           [Math.max(...lats), Math.max(...lngs)],
         ]
       : undefined
+  const center: [number, number] = [
+    lats.reduce((a, b) => a + b, 0) / lats.length,
+    lngs.reduce((a, b) => a + b, 0) / lngs.length,
+  ]
   return (
     <div className="relative h-[34vh] min-h-[220px] overflow-hidden rounded-b-[20px] lg:h-[320px] lg:rounded-[20px]">
       <Map
-        state={bounds ? ({ bounds, margin: 50 } as any) : { center: pts[0], zoom: 15 }}
+        state={bounds ? ({ bounds, margin: 50 } as any) : { center, zoom: 16 }}
         width="100%"
         height="100%"
-        options={{ suppressMapOpenBlock: true }}
+        options={{ suppressMapOpenBlock: true, maxZoom: 18 } as any}
       >
         {rest && (
           <Placemark
@@ -1214,7 +1266,7 @@ export default function OrderTrackPage() {
           )}
         </div>
 
-        {order && !pickup && <CourierCard order={order} shared={isPublicView} />}
+        {order && !pickup && <CourierCard order={order} shared={isPublicView} onShare={share} />}
 
         {/* Yo'nalish tafsilotlari */}
         <div className={card}>
