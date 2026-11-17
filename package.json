@@ -104,5 +104,13 @@
       "react": "^19.2.0",
       "react-dom": "^19.2.0"
     }
-  }
+  },
+  "browserslist": [
+    "chrome >= 80",
+    "edge >= 80",
+    "firefox >= 78",
+    "safari >= 13",
+    "ios_saf >= 13",
+    "samsung >= 12"
+  ]
 }

@@ -283,7 +283,8 @@ export default function RestaurantPage({ partnerId }: { partnerId?: string } = {
     )
   }
 
-  if (partnerQ.isError || !partner) {
+  // Tarmoq xatosida keshdagi (build) ma'lumot ko'rinib turadi; faqat 404 yoki ma'lumot yo'q bo'lsa — topilmadi
+  if (!partner || (partnerQ.isError && (partnerQ.error as any)?.response?.status === 404)) {
     return (
       <EmptyState
         emoji="🍽"

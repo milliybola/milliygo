@@ -140,7 +140,8 @@ export default function StorePage({ partnerId }: { partnerId?: string } = {}) {
       </div>
     )
   }
-  if (partnerQ.isError || !partner) {
+  // Tarmoq xatosida keshdagi (build) ma'lumot ko'rinib turadi; faqat 404 yoki ma'lumot yo'q bo'lsa — topilmadi
+  if (!partner || (partnerQ.isError && (partnerQ.error as any)?.response?.status === 404)) {
     return (
       <StoreEmpty
         title="Do'kon topilmadi"
@@ -255,7 +256,7 @@ export default function StorePage({ partnerId }: { partnerId?: string } = {}) {
 
       {menuQ.isLoading ? (
         <CatalogSkeleton />
-      ) : menuQ.isError ? (
+      ) : menuQ.isError && !menuQ.data ? (
         <StoreEmpty
           title="Katalogni yuklab bo'lmadi"
           subtitle="Internetni tekshirib, qaytadan urinib ko'ring"
