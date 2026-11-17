@@ -1,3 +1,4 @@
+import '@/utils/legacyPolyfills'
 import '@ant-design/v5-patch-for-react-19'
 import { App as AppAntd, ConfigProvider } from 'antd'
 import { NextIntlClientProvider } from 'next-intl'
