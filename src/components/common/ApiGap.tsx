@@ -9,9 +9,7 @@ import type { CSSProperties } from 'react'
 export const SHOW_API_GAPS = process.env.NEXT_PUBLIC_SHOW_API_GAPS !== 'false'
 
 interface ApiGapProps {
-  /** Nima yetishmaydi (tooltip matni): maydon yoki endpoint */
   note: string
-  /** Qisqa yorliq (standart: "API") */
   label?: string
   className?: string
   style?: CSSProperties
