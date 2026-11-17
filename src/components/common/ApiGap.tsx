@@ -1,11 +1,6 @@
 import { Tooltip } from 'antd'
 import type { CSSProperties } from 'react'
 
-/**
- * API'da hali yo'q ma'lumot/endpoint o'rnini ko'rsatuvchi belgi.
- * Ma'lumot to'qib chiqarilmaydi — o'rniga shu belgi turadi. Hammasi API_GAPS.md da.
- * O'chirish: NEXT_PUBLIC_SHOW_API_GAPS=false
- */
 export const SHOW_API_GAPS = process.env.NEXT_PUBLIC_SHOW_API_GAPS !== 'false'
 
 interface ApiGapProps {
