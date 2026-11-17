@@ -8,5 +8,7 @@ Disallow: /favorites/
 Disallow: /auth/
 Disallow: /delete-account/
 Disallow: /search/
+Disallow: /jobs/
+Disallow: /services/
 
 Sitemap: https://www.milliyapp.uz/sitemap.xml

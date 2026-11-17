@@ -37,7 +37,9 @@ export default function Seo({
         name="robots"
         content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large'}
       />
-      <link rel="canonical" href={url} />
+      <link key="canonical" rel="canonical" href={url} />
+      <link key="alt-uz" rel="alternate" hrefLang="uz" href={url} />
+      <link key="alt-default" rel="alternate" hrefLang="x-default" href={url} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:locale" content="uz_UZ" />
       <meta property="og:type" content={type} />
@@ -45,14 +47,16 @@ export default function Seo({
       <meta property="og:description" content={desc} />
       <meta property="og:url" content={url} />
       <meta property="og:image" content={image} />
+      <meta property="og:image:alt" content={full} />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={full} />
       <meta name="twitter:description" content={desc} />
       <meta name="twitter:image" content={image} />
       {jsonLd && (
         <script
+          key="jsonld"
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
         />
       )}
     </Head>

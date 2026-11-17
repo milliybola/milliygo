@@ -1,29 +1,23 @@
-import RestaurantPage from '@/features/go/pages/RestaurantPage'
+import PrerenderedPartner from '@/features/go/components/PrerenderedPartner'
+import {
+  partnerStaticPaths,
+  partnerStaticProps,
+  type PartnerStaticProps,
+} from '@/features/go/lib/seoBuild'
 
 /**
- * Eski havolalar (/restaurant/<uuid>/) uchun build vaqtida yaratiladigan sahifalar.
- * Yangi havolalar /restaurant/?id=<uuid> ko'rinishida — ular build'dan keyin
- * qo'shilgan restoranlar uchun ham ishlaydi.
+ * /restaurant/<slug>/ — build vaqtida har bir restoran uchun to'liq SEO bilan yaratiladi (kanonik havola).
+ * /restaurant/<uuid>/ — eski havolalar uchun ham yaratiladi (kanonik → slug).
+ * Build'dan keyin qo'shilgan restoranlar /restaurant/?id=<uuid> orqali ishlaydi.
  */
 export async function getStaticPaths() {
-  try {
-    const res = await fetch('https://mytizim.uz/partner/?partner_type=RESTAURANT').then((v) =>
-      v.json()
-    )
-    const partners = res?.data?.partners || res?.results || []
-    return {
-      paths: partners.map((p: any) => ({ params: { slug: String(p.uuid || p.id) } })),
-      fallback: false,
-    }
-  } catch {
-    return { paths: [], fallback: false }
-  }
+  return partnerStaticPaths('RESTAURANT')
 }
 
-export async function getStaticProps() {
-  return { props: {} }
+export async function getStaticProps({ params }: { params: { slug: string } }) {
+  return partnerStaticProps('RESTAURANT', params.slug)
 }
 
-export default function RestaurantBySlug() {
-  return <RestaurantPage />
+export default function RestaurantBySlug(props: PartnerStaticProps) {
+  return <PrerenderedPartner {...props} type="RESTAURANT" />
 }

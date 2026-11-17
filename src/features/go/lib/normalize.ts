@@ -413,7 +413,8 @@ export function normalizeOrder(j: any): Order {
     partner_name: str(j?.partner_name) || str(partnerObj?.name),
     partner_uuid: str(j?.partner_uuid) || str(partnerObj?.uuid),
     partner_address: cleanText(partnerObj?.address ?? j?.partner_address ?? j?.restaurant_address),
-    partner_phone: str(partnerObj?.phone) || str(j?.partner_phone),
+    // Mijozga faqat hamkorning bog'lanish telefoni (login raqami bilan bog'liq emas); bo'sh — ko'rsatilmaydi
+    partner_phone: str(partnerObj?.contact_phone),
     restaurant_lat: rLat,
     restaurant_lng: rLng,
     address: cleanText(j?.address),

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import ApiGap from '@/components/common/ApiGap'
+import { partnerPath } from '../lib/seoBuild'
 import type { Partner } from '../lib/types'
 import {
   cuisineLabel,
@@ -18,10 +19,9 @@ import {
 import { IconPin, IconScooter, IconStar, IconWalk } from '../ui/icons'
 import { Img } from '../ui/primitives'
 
+/** Toza (SEO) havola: /restaurant/<slug>/ — slug bo'lmasa uuid. Build'dan keyingi hamkorlar ham ochiladi (useRouteId) */
 export const partnerHref = (p: Partner, pickup = false) =>
-  p.partner_type === 'SHOP'
-    ? `/store/?id=${p.uuid}`
-    : `/restaurant/?id=${p.uuid}${pickup ? '&mode=pickup' : ''}`
+  `${partnerPath(p)}${pickup && p.partner_type !== 'SHOP' ? '?mode=pickup' : ''}`
 
 /** Faol (ochiq va yetkazadi) → yetkazmaydiganlar → yopiqlar; keyin reyting va masofa */
 export function sortPartners(

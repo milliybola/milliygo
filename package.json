@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 7080 --webpack",
-    "build": "next build --webpack",
+    "build": "next build --webpack && node scripts/generate-sitemap.mjs",
     "start": "next start",
     "lint": "eslint . && echo Lint passed",
     "eslint": "cross-env ESLINT_USE_FLAT_CONFIG=false eslint --fix .",

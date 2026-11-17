@@ -185,8 +185,9 @@ function InfoCell({ icon, value, label }: { icon: React.ReactNode; value: string
   )
 }
 
-export default function RestaurantPage() {
-  const id = useRouteId('restaurant')
+/** `partnerId` — oldindan yaratilgan (slug) sahifadan uzatiladigan uuid */
+export default function RestaurantPage({ partnerId }: { partnerId?: string } = {}) {
+  const id = useRouteId('restaurant', partnerId)
   const modeParam = useQueryParam('mode')
   const hydrated = useHydrated()
   const { lat, lng } = useUserLocation()
@@ -327,7 +328,7 @@ export default function RestaurantPage() {
 
   return (
     <div className="bg-white">
-      <PartnerSeo partner={partner} />
+      <PartnerSeo partner={partner} menu={menuQ.data?.categories} />
 
       <TopBar
         title={partner.name}

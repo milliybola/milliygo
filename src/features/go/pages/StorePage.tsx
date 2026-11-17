@@ -77,8 +77,9 @@ function CatalogSkeleton() {
  * sarlavha · qidiruv (tepada qotadi) · bepul yetkazish eslatmasi · toifalar to'ri (7 + "Barcha toifalar") ·
  * "Chegirmalar va aksiyalar" va har toifa bo'yicha mahsulot qatorlari · oltin savat tugmasi va bepul yetkazish paneli.
  */
-export default function StorePage() {
-  const id = useRouteId('store')
+/** `partnerId` — oldindan yaratilgan (slug) sahifadan uzatiladigan uuid */
+export default function StorePage({ partnerId }: { partnerId?: string } = {}) {
+  const id = useRouteId('store', partnerId)
   const router = useRouter()
   const hydrated = useHydrated()
   const { lat, lng } = useUserLocation()
@@ -238,7 +239,7 @@ export default function StorePage() {
   const threshold = partner.free_delivery_threshold
   return (
     <div className="pb-[170px]">
-      <PartnerSeo partner={partner} />
+      <PartnerSeo partner={partner} menu={menuQ.data?.categories} />
       <StoreTopBar
         partner={partner}
         lat={lat}

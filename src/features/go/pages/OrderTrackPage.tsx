@@ -1281,6 +1281,27 @@ export default function OrderTrackPage() {
             sub={restAddress}
             trailing={!pickup && distance ? distanceLabel(distance) : null}
           />
+          {order?.partner_phone && (
+            <a
+              href={`tel:${order.partner_phone}`}
+              className="ml-[3.25rem] mt-2 inline-flex items-center gap-1.5 text-[0.875rem] font-[700] text-[#15803D]"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.08 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.1 9.9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
+              </svg>
+              Restoranga qo'ng'iroq · {order.partner_phone}
+            </a>
+          )}
           {!pickup && (
             <div className="mt-3">
               <Stop

@@ -45,6 +45,8 @@ const PRIVATE = [
   '/search',
   '/auth',
   '/delete-account',
+  '/jobs',
+  '/services',
 ]
 
 const App = ({ Component, pageProps }: AppProps) => {

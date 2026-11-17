@@ -1,23 +1,19 @@
-import StorePage from '@/features/go/pages/StorePage'
+import PrerenderedPartner from '@/features/go/components/PrerenderedPartner'
+import {
+  partnerStaticPaths,
+  partnerStaticProps,
+  type PartnerStaticProps,
+} from '@/features/go/lib/seoBuild'
 
-/** Eski havolalar (/store/<uuid>/) uchun. Yangi havolalar: /store/?id=<uuid> */
+/** /store/<slug>/ — build vaqtida to'liq SEO bilan. Build'dan keyin qo'shilganlar: /store/?id=<uuid> */
 export async function getStaticPaths() {
-  try {
-    const res = await fetch('https://mytizim.uz/partner/?partner_type=SHOP').then((v) => v.json())
-    const partners = res?.data?.partners || res?.results || []
-    return {
-      paths: partners.map((p: any) => ({ params: { slug: String(p.uuid || p.id) } })),
-      fallback: false,
-    }
-  } catch {
-    return { paths: [], fallback: false }
-  }
+  return partnerStaticPaths('SHOP')
 }
 
-export async function getStaticProps() {
-  return { props: {} }
+export async function getStaticProps({ params }: { params: { slug: string } }) {
+  return partnerStaticProps('SHOP', params.slug)
 }
 
-export default function StoreBySlug() {
-  return <StorePage />
+export default function StoreBySlug(props: PartnerStaticProps) {
+  return <PrerenderedPartner {...props} type="SHOP" />
 }

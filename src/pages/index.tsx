@@ -28,6 +28,11 @@ const JSON_LD = [
     name: SITE_NAME,
     url: `${SITE_URL}/`,
     inLanguage: 'uz',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: { '@type': 'EntryPoint', urlTemplate: `${SITE_URL}/search/?q={search_term_string}` },
+      'query-input': 'required name=search_term_string',
+    },
   },
 ]
 
@@ -35,6 +40,9 @@ export default function Home() {
   return (
     <>
       <Seo title={DEFAULT_TITLE} path="/" jsonLd={JSON_LD} />
+      <h1 className="sr-only">
+        MilliyGo — G'allaorolda taom va mahsulotlarni uyga tez yetkazib berish
+      </h1>
       <HomePage />
     </>
   )
