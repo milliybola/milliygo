@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { SUPPORT_PHONE, SUPPORT_PHONE_DISPLAY, SUPPORT_TELEGRAM } from '../layout/GoFooter'
 import { addAddress, deleteAddress, fetchAddresses, setDefaultAddress } from '../lib/api'
 import ActiveOrdersStrip from '../components/ActiveOrdersStrip'
+import InlineLogin from '../components/InlineLogin'
 import { useOrders } from '../lib/queries'
 import { useSession, useUi, useUserLocation } from '../lib/session'
 import { cx } from '../lib/utils'
@@ -23,7 +24,7 @@ import {
   IconTrash,
   IconUser,
 } from '../ui/icons'
-import { Button, EmptyState, Page, Sheet, Skeleton } from '../ui/primitives'
+import { Button, Page, Sheet, Skeleton } from '../ui/primitives'
 
 function Caption({ children }: { children: React.ReactNode }) {
   return (
@@ -125,7 +126,7 @@ function initials(name?: string | null) {
 export default function ProfilePage() {
   const router = useRouter()
   const qc = useQueryClient()
-  const { isAuthenticated, profile, loadingProfile, openLogin, logOut } = useSession()
+  const { isAuthenticated, profile, loadingProfile, logOut } = useSession()
   const { active } = useOrders()
   const { lat, lng, address, hasLocation } = useUserLocation()
   const setLocationOpen = useUi((s) => s.setLocationOpen)
@@ -165,12 +166,7 @@ export default function ProfilePage() {
         <Head>
           <title>Profil — MilliyGo</title>
         </Head>
-        <EmptyState
-          emoji="👋"
-          title="Xush kelibsiz!"
-          text="Buyurtma berish, manzillarni saqlash va buyurtmalarni kuzatish uchun Telegram orqali kiring."
-          action={<Button onClick={openLogin}>Kirish</Button>}
-        />
+        <InlineLogin />
         <Section title="YORDAM VA MA'LUMOT">
           <MenuRow
             icon={<IconTelegram size={19} />}

@@ -43,6 +43,7 @@ import {
   IconStore,
   IconWalk,
 } from '../ui/icons'
+import InlineLogin from '../components/InlineLogin'
 import { BackButton, Button, EmptyState, Page, Sheet } from '../ui/primitives'
 
 export const LAST_ORDER_KEY = 'go_last_order'
@@ -63,7 +64,7 @@ export default function CheckoutPage() {
   const partnerId = useQueryParam('partner')
   const cart = useCart((s) => (partnerId ? s.carts[partnerId] : undefined))
   const { setMode, setCutlery, clear } = useCart()
-  const { isAuthenticated, profile, openLogin } = useSession()
+  const { isAuthenticated, profile } = useSession()
   const { lat, lng, address, hasLocation } = useUserLocation()
   const setLocation = useLocationStore((s) => s.setLocation)
   const setInArea = useLocationStore((s) => s.setIsInServiceArea)
@@ -158,12 +159,7 @@ export default function CheckoutPage() {
             Buyurtmani rasmiylashtirish
           </h1>
         </div>
-        <EmptyState
-          emoji="🔐"
-          title="Davom etish uchun kiring"
-          text="Buyurtma holatini kuzatish va kuryer bilan bog'lanish uchun Telegram orqali tizimga kiring."
-          action={<Button onClick={openLogin}>Kirish</Button>}
-        />
+        <InlineLogin />
       </Page>
     )
   }

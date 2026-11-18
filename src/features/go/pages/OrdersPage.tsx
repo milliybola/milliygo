@@ -3,6 +3,7 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useMemo, useState, type ReactNode } from 'react'
 import { orderHref } from '../components/ActiveOrdersStrip'
+import InlineLogin from '../components/InlineLogin'
 import { fetchPartner, fetchPartners } from '../lib/api'
 import { productLine, useCart } from '../lib/cart'
 import { normalizeProduct, transportLabel } from '../lib/normalize'
@@ -469,7 +470,7 @@ function DetailsSheet({ o, onClose }: { o: Order | null; onClose: () => void }) 
 
 export default function OrdersPage() {
   const router = useRouter()
-  const { isAuthenticated, openLogin } = useSession()
+  const { isAuthenticated } = useSession()
   const { orders, isLoading, isError, refetch } = useOrders({ poll: true })
   const setQty = useCart((s) => s.setQty)
   const setMode = useCart((s) => s.setMode)
@@ -659,12 +660,7 @@ export default function OrdersPage() {
         </div>
 
         {!isAuthenticated ? (
-          <EmptyState
-            emoji="🔐"
-            title="Buyurtmalarni ko'rish uchun kiring"
-            text="Telegram orqali bir zumda tizimga kiring."
-            action={<Button onClick={openLogin}>Kirish</Button>}
-          />
+          <InlineLogin />
         ) : (
           <>
             {searchOpen && (

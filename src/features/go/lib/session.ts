@@ -1,6 +1,7 @@
 import { message } from 'antd'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { setCookie } from 'cookies-next'
+import { useRouter } from 'next/router'
 import { useContext, useSyncExternalStore } from 'react'
 import { create } from 'zustand'
 import { AuthContext } from '@/features/Account/auth/context/authContext'
@@ -69,6 +70,7 @@ export function writeStorage(
 
 export function useSession() {
   const ctx = useContext(AuthContext)
+  const router = useRouter()
   const isAuthenticated = !!useAuthStore((s) => s.isAuthenticated)
   const hydrated = useHydrated()
   const authed = hydrated && isAuthenticated
@@ -82,7 +84,12 @@ export function useSession() {
     isAuthenticated: authed,
     profile: me.data ?? null,
     loadingProfile: me.isLoading,
-    openLogin: () => ctx?.setLoginModalOpen?.(true),
+    // Modal emas — alohida kirish sahifasi; login'dan keyin shu sahifaga qaytadi
+    openLogin: () => {
+      const here = router.asPath || '/'
+      const next = here.startsWith('/') && !here.startsWith('/auth') ? here : '/'
+      router.push(`/auth/login/?next=${encodeURIComponent(next)}`)
+    },
     logOut: () => ctx?.logOut?.(),
   }
 }

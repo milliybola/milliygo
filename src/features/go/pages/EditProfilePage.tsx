@@ -3,10 +3,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect, useRef, useState } from 'react'
+import InlineLogin from '../components/InlineLogin'
 import { updateProfile } from '../lib/api'
 import { useSession } from '../lib/session'
 import { cx } from '../lib/utils'
-import { Button, EmptyState } from '../ui/primitives'
 
 const card = 'rounded-[22px] bg-white p-4 shadow-[0_6px_18px_rgba(0,0,0,0.03)]'
 const MAX = 5 * 1024 * 1024
@@ -24,7 +24,7 @@ function Label({ icon, children }: { icon: React.ReactNode; children: React.Reac
 export default function EditProfilePage() {
   const router = useRouter()
   const qc = useQueryClient()
-  const { isAuthenticated, profile, openLogin } = useSession()
+  const { isAuthenticated, profile } = useSession()
   const [name, setName] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -86,11 +86,7 @@ export default function EditProfilePage() {
   if (!isAuthenticated) {
     return (
       <div className="bg-[#FAF8F5]">
-        <EmptyState
-          emoji="🔐"
-          title="Profilni tahrirlash uchun kiring"
-          action={<Button onClick={openLogin}>Kirish</Button>}
-        />
+        <InlineLogin />
       </div>
     )
   }
