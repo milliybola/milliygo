@@ -16,7 +16,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from './api'
-import { useSession } from './session'
+import { useSession, useUserLocation } from './session'
 import { isOrderActive, sortByNewest } from './status'
 import type { PartnerFilters, PartnerType } from './types'
 
@@ -43,13 +43,19 @@ export const usePartner = (uuid?: string) =>
     staleTime: 2 * MIN,
   })
 
-export const useMenu = (uuid?: string) =>
-  useQuery({
-    queryKey: ['go', 'menu', uuid],
-    queryFn: () => fetchMenu(uuid!),
+export const useMenu = (uuid?: string) => {
+  const { lat, lng } = useUserLocation()
+  // ~100 m aniqlik: manzil biroz siljisa menyu qayta yuklanmaydi
+  const near = lat != null && lng != null ? `${lat.toFixed(3)},${lng.toFixed(3)}` : ''
+  return useQuery({
+    queryKey: ['go', 'menu', uuid, near],
+    queryFn: () => fetchMenu(uuid!, lat, lng),
     enabled: !!uuid,
     staleTime: 2 * MIN,
+    // Faqat shu hamkor ichida manzil o'zgarsa eski menyu ko'rinib turadi (boshqa hamkorga o'tganda — yo'q)
+    placeholderData: (prev, prevQuery) => (prevQuery?.queryKey[2] === uuid ? prev : undefined),
   })
+}
 
 export const useSets = (uuid?: string) =>
   useQuery({

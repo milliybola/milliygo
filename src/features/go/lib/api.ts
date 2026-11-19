@@ -78,12 +78,16 @@ export async function fetchPartner(uuid: string): Promise<Partner> {
 
 /** Menyu: kategoriyalar mahsulotlari bilan bitta so'rovda keladi */
 export async function fetchMenu(
-  partnerUuid: string
+  partnerUuid: string,
+  lat?: number | null,
+  lng?: number | null
 ): Promise<{ categories: MenuCategory[]; meta: any }> {
+  // Manzil bo'lsa — server eng yaqin filial menyusini beradi (shu filialda o'chirilgan taomlar chiqmaydi)
+  const near = lat != null && lng != null ? { latitude: lat, longitude: lng } : {}
   const res = await request({
     url: '/partner/category/',
     method: 'get',
-    params: { partner: partnerUuid },
+    params: { partner: partnerUuid, ...near },
   })
   return normalizeMenu(res)
 }
