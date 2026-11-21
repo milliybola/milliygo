@@ -3,6 +3,7 @@ import { useMemo, type ReactNode } from 'react'
 import { useNeighborhoods } from '@/hooks/useNeighborhoods'
 import { checkServiceArea } from '@/helpers/location-helper'
 import ActiveOrdersStrip from '../components/ActiveOrdersStrip'
+import AppDownloadCards from '../components/AppDownloadCards'
 import InstructionStories from '../components/InstructionStories'
 import PartnerFilterBar, { usePartnerFilters } from '../components/PartnerFilterBar'
 import PartnerCard, { sortPartners } from '../components/PartnerCard'
@@ -377,6 +378,8 @@ export default function HomePage() {
           />
         </>
       )}
+
+      <AppDownloadCards />
 
       <section className="mt-6">
         <Page>
