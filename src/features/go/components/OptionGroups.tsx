@@ -12,19 +12,44 @@ const needed = (g: ProductOptionGroup) => Math.min(g.min_select, availableCount(
  * Tanlov holati: guruh uuid → tanlangan opsiya uuid'lari.
  * `resetKey` o'zgarganda (boshqa mahsulot ochilganda) tanlov tozalanadi.
  */
-const NOTHING_PICKED: Record<string, string[]> = {}
+/** Majburiy bitta tanlov (o'lcham kabi) — doim biror variant tanlangan bo'ladi */
+const isRequiredSingle = (g: ProductOptionGroup) => g.max_select === 1 && needed(g) >= 1
+
+/** Boshlang'ich tanlov: majburiy bitta tanlovli guruhda birinchi mavjud variant (odatda eng arzoni) */
+function defaultPicks(groups: ProductOptionGroup[]): Record<string, string[]> {
+  const out: Record<string, string[]> = {}
+  for (const g of groups) {
+    if (!isRequiredSingle(g)) continue
+    const first = g.options.find((o) => o.is_available)
+    if (first) out[g.uuid] = [first.uuid]
+  }
+  return out
+}
+
+/**
+ * Narxni belgilaydigan guruh (o'lcham): majburiy, bitta tanlov, variant narxlari har xil.
+ * Menyu kartasida narxlar «110 000 / 130 000 so'm» ko'rinishida chiqadi.
+ */
+export function variantPrices(base: number, groups: ProductOptionGroup[] | undefined): number[] {
+  const g = (groups || []).find(
+    (x) =>
+      isRequiredSingle(x) &&
+      new Set(x.options.filter((o) => o.is_available).map((o) => o.price_delta)).size > 1
+  )
+  if (!g) return []
+  const prices = g.options.filter((o) => o.is_available).map((o) => base + o.price_delta)
+  return Array.from(new Set(prices)).sort((a, b) => a - b)
+}
 
 export function useOptionSelection(groups: ProductOptionGroup[], resetKey: string) {
+  const defaults = useMemo(() => defaultPicks(groups), [groups])
   // Tanlov o'z kaliti bilan saqlanadi: boshqa mahsulot ochilsa eski tanlov avtomatik "eskirgan" bo'ladi
-  const [state, setState] = useState<{ key: string; picked: Record<string, string[]> }>({
-    key: resetKey,
-    picked: NOTHING_PICKED,
-  })
-  const picked = state.key === resetKey ? state.picked : NOTHING_PICKED
+  const [state, setState] = useState<{ key: string; picked: Record<string, string[]> } | null>(null)
+  const picked = state && state.key === resetKey ? state.picked : defaults
 
   const toggle = (g: ProductOptionGroup, optionUuid: string) =>
     setState((prev) => {
-      const base = prev.key === resetKey ? prev.picked : NOTHING_PICKED
+      const base = prev && prev.key === resetKey ? prev.picked : defaults
       const current = base[g.uuid] || []
       let next = base
       if (current.includes(optionUuid)) {
@@ -58,7 +83,7 @@ export function useOptionSelection(groups: ProductOptionGroup[], resetKey: strin
 
 function hint(g: ProductOptionGroup) {
   const need = needed(g)
-  if (g.max_select === 1) return need >= 1 ? 'Majburiy · bittasini tanlang' : 'Ixtiyoriy'
+  if (g.max_select === 1) return need >= 1 ? '' : 'Ixtiyoriy'
   if (need >= 1)
     return need === g.max_select
       ? `Majburiy · ${g.max_select} tasini tanlang`
@@ -71,13 +96,22 @@ export default function OptionGroups({
   picked,
   onToggle,
   highlight,
+  basePrice,
 }: {
   groups: ProductOptionGroup[]
   picked: Record<string, string[]>
   onToggle: (g: ProductOptionGroup, optionUuid: string) => void
   /** Majburiy, lekin to'ldirilmagan guruh — qizil ajratiladi */
   highlight?: ProductOptionGroup | null
+  /** Opsiyasiz narx: o'lcham tugmalarida «+20 000» emas, to'liq narx ko'rsatiladi */
+  basePrice?: number
 }) {
+  const deltaOf = (g: ProductOptionGroup) =>
+    g.options
+      .filter((o) => (picked[g.uuid] || []).includes(o.uuid))
+      .reduce((sum, o) => sum + o.price_delta, 0)
+  const allExtra = groups.reduce((sum, g) => sum + deltaOf(g), 0)
+
   return (
     <div className="mt-5 space-y-5">
       {groups.map((g) => {
@@ -85,6 +119,75 @@ export default function OptionGroups({
         const radio = g.max_select === 1
         const full = !radio && chosen.length >= g.max_select
         const warn = highlight?.uuid === g.uuid
+        if (radio) {
+          // Bitta tanlov — katta tugmalar: nomi va (majburiy bo'lsa) to'liq narxi
+          const required = needed(g) >= 1
+          const others = basePrice !== undefined ? basePrice + allExtra - deltaOf(g) : null
+          const priced = g.options.some((o) => o.price_delta > 0)
+          return (
+            <div key={g.uuid}>
+              <div className="flex items-baseline justify-between gap-3">
+                <div className="text-[1.0625rem] font-[800] text-go-ink">{g.name}</div>
+                {hint(g) && (
+                  <div
+                    className={cx(
+                      'shrink-0 text-[0.8125rem] font-[700]',
+                      warn ? 'text-go-red' : 'text-go-muted'
+                    )}
+                  >
+                    {hint(g)}
+                  </div>
+                )}
+              </div>
+              <div
+                className={cx(
+                  'mt-2 grid gap-2',
+                  g.options.length === 3 ? 'grid-cols-3' : 'grid-cols-2'
+                )}
+              >
+                {g.options.map((o) => {
+                  const on = chosen.includes(o.uuid)
+                  const price = !o.is_available
+                    ? 'Mavjud emas'
+                    : required && others !== null && priced
+                      ? som(others + o.price_delta)
+                      : o.price_delta > 0
+                        ? `+${som(o.price_delta)}`
+                        : ''
+                  return (
+                    <button
+                      key={o.uuid}
+                      type="button"
+                      disabled={!o.is_available}
+                      aria-pressed={on}
+                      onClick={() => onToggle(g, o.uuid)}
+                      className={cx(
+                        'flex min-h-[56px] cursor-pointer flex-col items-center justify-center rounded-[14px] border-2 border-solid px-2 py-2 text-center transition-colors disabled:cursor-not-allowed disabled:opacity-45',
+                        on
+                          ? 'border-go-green bg-[#ECFDF3] text-go-ink'
+                          : warn
+                            ? 'border-go-red bg-white text-go-ink'
+                            : 'border-go-line bg-white text-go-ink'
+                      )}
+                    >
+                      <span className="text-[0.9375rem] font-[800] leading-tight">{o.name}</span>
+                      {price && (
+                        <span
+                          className={cx(
+                            'mt-0.5 whitespace-nowrap text-[0.8125rem] font-[700]',
+                            on ? 'text-go-green' : 'text-go-muted'
+                          )}
+                        >
+                          {price}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        }
         return (
           <div key={g.uuid}>
             <div className="flex items-baseline justify-between gap-3">

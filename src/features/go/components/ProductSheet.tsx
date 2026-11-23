@@ -122,13 +122,19 @@ export default function ProductSheet({
             className="flex h-[54px] min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-[16px] border-0 bg-[#FFD12B] px-2 text-[0.8125rem] font-[900] text-[#1E293B] disabled:cursor-not-allowed disabled:bg-[#E2E8F0] disabled:text-[#94A3B8] sm:text-[1rem]"
           >
             <span className="whitespace-nowrap">
-              {closed
-                ? 'Muassasa yopiq'
-                : unavailable
-                  ? 'Mavjud emas'
-                  : inCart && !hasGroups
-                    ? 'Yangilash'
-                    : "Savatga qo'shish"}
+              {closed ? (
+                'Muassasa yopiq'
+              ) : unavailable ? (
+                'Mavjud emas'
+              ) : inCart && !hasGroups ? (
+                'Yangilash'
+              ) : (
+                <>
+                  {/* Tor ekranda narx bilan birga sig'ishi uchun qisqa matn */}
+                  <span className="hidden dxx:inline">Qo&apos;shish</span>
+                  <span className="dxx:hidden">Savatga qo&apos;shish</span>
+                </>
+              )}
             </span>
             {!closed && !unavailable && (
               <>
@@ -216,6 +222,7 @@ export default function ProductSheet({
             picked={picked}
             onToggle={toggle}
             highlight={showMissing ? missing : null}
+            basePrice={price - selected.reduce((sum, o) => sum + o.price_delta, 0)}
           />
         )}
       </div>

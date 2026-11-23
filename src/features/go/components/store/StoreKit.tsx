@@ -31,7 +31,7 @@ import {
 } from '../../ui/icons'
 import { Sheet } from '../../ui/primitives'
 import DeliveryProgressPanel from '../DeliveryProgressPanel'
-import OptionGroups, { useOptionSelection } from '../OptionGroups'
+import OptionGroups, { useOptionSelection, variantPrices } from '../OptionGroups'
 
 /*
  * Superapp `lib/features/store/store_detail_page.dart` ning 1:1 veb nusxasi.
@@ -480,7 +480,13 @@ export function StoreProductCard({
         className="mt-2 truncate text-[1.0625rem] font-[800]"
         style={{ color: sale ? S.sale : S.ink }}
       >
-        {formatSum(product.final_price)} so&apos;m
+        {(() => {
+          const v = variantPrices(product.final_price, product.option_groups)
+          if (v.length <= 1) return `${formatSum(product.final_price)} so'm`
+          return v.length <= 3
+            ? `${v.map(formatSum).join(' / ')} so'm`
+            : `${formatSum(v[0])} so'mdan`
+        })()}
         {product.unit === 'KG' && (
           <span className="text-[0.8125rem] font-[600]" style={{ color: S.muted }}>
             {' '}
@@ -808,7 +814,12 @@ function StoreProductBody({
       )}
       {hasGroups && (
         <div className="px-4">
-          <OptionGroups groups={groups} picked={picked} onToggle={toggle} />
+          <OptionGroups
+            groups={groups}
+            picked={picked}
+            onToggle={toggle}
+            basePrice={line.price - selected.reduce((sum, o) => sum + o.price_delta, 0)}
+          />
         </div>
       )}
       {more.length > 0 && (

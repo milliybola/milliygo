@@ -12,6 +12,7 @@ import type { Partner, Product, ProductSet } from '../lib/types'
 import { cx, dealLabel, formatSum, som } from '../lib/utils'
 import { useRequireLocation } from '../lib/session'
 import { Badge, Img, Stepper } from '../ui/primitives'
+import { variantPrices } from './OptionGroups'
 
 export function DealBadges({ product, isSet }: { product?: Product; isSet?: boolean }) {
   const deal = dealLabel(product?.promotion)
@@ -33,6 +34,30 @@ export function DealBadges({ product, isSet }: { product?: Product; isSet?: bool
         </span>
       )}
       {isSet && <Badge tone="green">SET</Badge>}
+    </div>
+  )
+}
+
+/** O'lchamli mahsulot: «110 000 / 130 000 so'm» (ko'p bo'lsa — «110 000 so'mdan») */
+export function VariantPrice({
+  prices,
+  size = 16,
+  className,
+}: {
+  prices: number[]
+  size?: number
+  className?: string
+}) {
+  const text =
+    prices.length <= 3
+      ? `${prices.map(formatSum).join(' / ')} so'm`
+      : `${formatSum(prices[0])} so'mdan`
+  return (
+    <div
+      className={cx('font-[900] leading-tight tracking-[-0.3px] text-go-ink', className)}
+      style={{ fontSize: size }}
+    >
+      {text}
     </div>
   )
 }
@@ -102,6 +127,7 @@ export default function ProductCard({ partner, product, closed, onOpen, compact 
   const setQty = useCart((s) => s.setQty)
   const guard = useClosedGuard(partner, closed)
   const unavailable = !product.is_available
+  const variants = variantPrices(product.final_price, product.option_groups)
   const inc = () => {
     if (withOptions) return onOpen?.(product)
     if (guard()) setQty(partner, line, qty + 1)
@@ -141,12 +167,16 @@ export default function ProductCard({ partner, product, closed, onOpen, compact 
           </div>
         )}
       </div>
-      <PriceLine
-        price={product.final_price}
-        old={product.final_price < product.price ? product.price : null}
-        className="mt-2"
-        size={compact ? 16 : 17}
-      />
+      {variants.length > 1 ? (
+        <VariantPrice prices={variants} className="mt-2" size={compact ? 15 : 16} />
+      ) : (
+        <PriceLine
+          price={product.final_price}
+          old={product.final_price < product.price ? product.price : null}
+          className="mt-2"
+          size={compact ? 16 : 17}
+        />
+      )}
       <button
         type="button"
         onClick={(e) => {
