@@ -23,8 +23,8 @@ export default function LoginPage() {
       <div className="px-4 py-4">
         <Logo />
       </div>
-      <div className="flex flex-1 items-center justify-center px-4 pb-10">
-        <div className="w-full max-w-[420px] rounded-[24px] border border-solid border-go-line p-5">
+      <div className="flex flex-1 items-start justify-center px-4 pb-10 pt-1 sm:items-center sm:pt-0">
+        <div className="w-full max-w-[420px] rounded-[24px] border border-solid border-[#E9ECF0] bg-white p-5 shadow-[0_10px_40px_rgba(17,24,39,0.06)]">
           <GoLogin onDone={() => router.replace(next)} />
         </div>
       </div>
