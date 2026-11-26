@@ -447,6 +447,7 @@ export function normalizeProfile(j: any): UserProfile | null {
     id: d.id,
     uuid: d.uuid,
     full_name: str(d.full_name) || joined || '',
+    birth_date: str(d.birth_date) || null,
     phone_number: str(d.phone_number) || str(d.phone) || '',
     email: str(d.email) || undefined,
     avatar: absUrl(d.avatar),

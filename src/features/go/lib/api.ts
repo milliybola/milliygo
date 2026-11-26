@@ -255,6 +255,12 @@ export async function updateMe(data: { full_name: string; phone_number: string; 
   return normalizeProfile(res)
 }
 
+/** SMS bilan yangi ochilgan hisob: ism va tug'ilgan sana (YYYY-MM-DD) */
+export async function saveBasicProfile(data: { full_name: string; birth_date: string }) {
+  const res = await request({ url: '/auth/user/me/', method: 'patch', data })
+  return normalizeProfile(res)
+}
+
 /** Profilni saqlash (superapp `updateProfile`): avatar bo'lsa multipart — PUT, bo'lmasa PATCH, keyin POST+override */
 export async function updateProfile(a: {
   full_name: string

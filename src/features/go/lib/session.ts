@@ -114,6 +114,7 @@ export function useCompleteLogin() {
     setCookie('userInfo', short)
     login(safe)
     qc.invalidateQueries({ queryKey: ['go'] })
+    return safe
   }
 }
 

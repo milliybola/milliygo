@@ -3,6 +3,7 @@ import { useEffect, useState, type MutableRefObject } from 'react'
 import { apiErrorMessage, loginWithSmsCode, sendSmsCode } from '../lib/api'
 import { useCompleteLogin } from '../lib/session'
 import { Button } from '../ui/primitives'
+import GoProfileStep from './GoProfileStep'
 
 const RESEND_SECONDS = 60
 
@@ -25,6 +26,8 @@ export default function GoSmsLogin({
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [wait, setWait] = useState(0)
+  // Ism yoki tug'ilgan sana bo'sh bo'lsa — kirgandan keyin to'ldirish qadami (bo'sh hisoblar qolmasin)
+  const [profileName, setProfileName] = useState<string | null>(null)
   const complete = useCompleteLogin()
   const phone = `998${digits}`
 
@@ -57,7 +60,12 @@ export default function GoSmsLogin({
     setLoading(true)
     try {
       const tokens = await loginWithSmsCode(phone, value, device.current)
-      await complete(tokens)
+      const user = await complete(tokens)
+      const name = String(user?.full_name || '').trim()
+      if (!name || !user?.birth_date) {
+        setProfileName(name)
+        return
+      }
       message.success('Muvaffaqiyatli kirdingiz')
       onDone?.()
     } catch (e) {
@@ -66,6 +74,10 @@ export default function GoSmsLogin({
     } finally {
       setLoading(false)
     }
+  }
+
+  if (profileName !== null) {
+    return <GoProfileStep initialName={profileName} onDone={onDone} />
   }
 
   return (

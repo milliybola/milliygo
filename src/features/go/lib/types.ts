@@ -329,6 +329,7 @@ export interface UserProfile {
   id?: number
   uuid?: string
   full_name: string
+  birth_date?: string | null
   phone_number: string
   email?: string
   avatar?: string | null
