@@ -62,7 +62,8 @@ export default function ProductSheet({
 
   const price = line.price
   const old = line.old_price
-  const promo = product?.promotion
+  // Qator aksiyasi: o'lchamli aksiyada boshqa o'lcham tanlansa — yo'q
+  const promo = line.promotion
   const free = freeCount(qty, promo)
   const total = (qty - free) * price
   const deal = dealLabel(promo)

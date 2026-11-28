@@ -88,6 +88,8 @@ export interface PromotionShort {
   buy_quantity: number
   get_quantity: number
   label?: string
+  /** O'lcham bo'yicha aksiya (backend `promotion_v2.options`): faqat shu variant uuid'larida; bo'sh — barchasida */
+  options?: string[]
 }
 
 /** To'liq aksiya obyekti: GET /partner/promotions/?partner=<uuid> */

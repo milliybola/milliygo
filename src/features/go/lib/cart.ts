@@ -12,7 +12,7 @@ import type {
   ProductSet,
   SelectedOption,
 } from './types'
-import { giftCount, lineSaving, lineTotal, roundQty } from './utils'
+import { giftCount, lineSaving, lineTotal, promoApplies, roundQty } from './utils'
 
 /**
  * Savatlar — har bir hamkor uchun alohida (superapp CartController kabi).
@@ -72,7 +72,16 @@ export const productLine = (
     price: base + extra,
     old_price: discounted ? old + extra : null,
     // 1+1 / 2+1 faqat butun donali, qadoqsiz qatorlarda
-    promotion: packaging || p.unit === 'KG' ? null : (p.promotion ?? null),
+    // o'lchamli aksiya — faqat belgilangan o'lcham tanlanganda (aks holda sovg'a qo'shilmaydi)
+    promotion:
+      packaging ||
+      p.unit === 'KG' ||
+      !promoApplies(
+        p.promotion,
+        options.map((o) => o.uuid)
+      )
+        ? null
+        : (p.promotion ?? null),
     options,
     unit: p.unit,
     step: packaging ? 1 : p.step,

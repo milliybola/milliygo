@@ -215,6 +215,27 @@ export function dealLabel(p?: PromotionShort | null): string | null {
   return p.label || `${p.buy_quantity}+${p.get_quantity}`
 }
 
+/** Qatorga aksiya tegadimi (server `applies_to` bilan bir xil): cheklov yo'q yoki variant tanlanganlardan */
+export function promoApplies(p: PromotionShort | null | undefined, optionUuids: string[]): boolean {
+  const allowed = p?.options ?? []
+  return allowed.length === 0 || optionUuids.some((u) => allowed.includes(u))
+}
+
+/** Mahsulot belgisi: «2+1», o'lchamli aksiyada «2+1 · Katta» */
+export function dealBadge(product?: {
+  promotion?: PromotionShort | null
+  option_groups?: { options: { uuid: string; name: string }[] }[]
+}): string | null {
+  const label = dealLabel(product?.promotion)
+  if (!label) return null
+  const allowed = product?.promotion?.options ?? []
+  const sizes = (product?.option_groups ?? [])
+    .flatMap((g) => g.options)
+    .filter((o) => allowed.includes(o.uuid))
+    .map((o) => o.name)
+  return sizes.length ? `${label} · ${sizes.join(', ')}` : label
+}
+
 /**
  * free = umumiy miqdordan, lekin AKSIYA BIR BUYURTMADA BIR MARTA — ko'pi bilan `get` ta
  * (server `PromotionModel.free_units` shu qoidani ishlatadi).

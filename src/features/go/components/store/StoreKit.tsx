@@ -14,7 +14,7 @@ import {
 import { useFavorite } from '../../lib/favorites'
 import { useHydrated } from '../../lib/session'
 import type { MenuCategory, Partner, Product } from '../../lib/types'
-import { cx, dealLabel, etaRange, formatQty, formatSum, isOpenNow, zoneFor } from '../../lib/utils'
+import { cx, dealBadge, etaRange, formatQty, formatSum, isOpenNow, zoneFor } from '../../lib/utils'
 import {
   IconArrowRight,
   IconBack,
@@ -412,7 +412,7 @@ export function StoreProductCard({
   const guard = useAddGuard(partner)
   const sale = hasSale(product)
   const badge = discountLabel(product)
-  const deal = dealLabel(product.promotion)
+  const deal = dealBadge(product)
   const unavailable = !product.is_available
   const lowStock =
     product.stock_quantity != null && product.stock_quantity > 0 && product.stock_quantity <= 5
@@ -721,7 +721,7 @@ function StoreProductBody({
   const showDesc = !!desc && desc.toLowerCase() !== item.name.toLowerCase()
   const sale = hasSale(item)
   const badge = discountLabel(item)
-  const deal = dealLabel(item.promotion)
+  const deal = dealBadge(item)
 
   return (
     <div className="relative">

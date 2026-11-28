@@ -9,13 +9,13 @@ import {
   useProductQty,
 } from '../lib/cart'
 import type { Partner, Product, ProductSet } from '../lib/types'
-import { cx, dealLabel, formatSum, som } from '../lib/utils'
+import { cx, dealBadge, formatSum, som } from '../lib/utils'
 import { useRequireLocation } from '../lib/session'
 import { Badge, Img, Stepper } from '../ui/primitives'
 import { variantPrices } from './OptionGroups'
 
 export function DealBadges({ product, isSet }: { product?: Product; isSet?: boolean }) {
-  const deal = dealLabel(product?.promotion)
+  const deal = dealBadge(product)
   const disc = product && product.discount > 0 ? product.discount : 0
   if (!deal && !disc && !isSet) return null
   return (

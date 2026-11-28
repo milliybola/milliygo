@@ -115,6 +115,7 @@ export function normalizePromotionShort(p: any): PromotionShort | null {
     buy_quantity: buy,
     get_quantity: get,
     label: p.label || undefined,
+    options: Array.isArray(p.options) ? p.options.map(String) : [],
   }
 }
 
@@ -187,7 +188,8 @@ export function normalizeProduct(j: any, categoryUuid?: string): Product {
     images: images.length ? images : main ? [main] : [],
     is_available: j?.is_available !== false && j?.is_active !== false,
     category_uuid: categoryUuid,
-    promotion: normalizePromotionShort(j?.promotion),
+    // `promotion_v2` o'lchamli aksiyani ham beradi (`promotion` da u eski ilovalar uchun yashirilgan)
+    promotion: normalizePromotionShort(j?.promotion_v2) ?? normalizePromotionShort(j?.promotion),
     kind: j?.kind === 'SET' ? 'SET' : 'SINGLE',
     option_groups: normalizeOptionGroups(j?.option_groups),
     unit,
